@@ -12,6 +12,8 @@ use surrealdb::engine::local::SurrealKv;
 use surrealdb::opt::auth::Record;
 use surrealdb::opt::Resource;
 pub use surrealdb::sql::Value as Other;
+use surrealdb::Action;
+use surrealdb::Notification;
 use surrealdb::RecordId;
 pub use surrealdb::Value;
 
@@ -42,6 +44,21 @@ fn parse_resource(resource: String) -> Resource {
         return Resource::RecordId(RecordId::from_table_key(halves[0], halves[1]));
     }
     Resource::Table(resource)
+}
+
+pub struct DBNotification {
+    action: Action,
+    value: Value,
+    uuid: String,
+}
+impl From<Notification<Value>> for DBNotification {
+    fn from(value: Notification<Value>) -> Self {
+        DBNotification {
+            action: value.action,
+            value: value.data,
+            uuid: value.query_id.to_string(),
+        }
+    }
 }
 
 impl SurrealProxy {
@@ -171,7 +188,7 @@ impl SurrealProxy {
             .with_context(|| "Surreal::select_all")?)
     }
 
-    pub async fn select_live(&self, resource: String, sink: StreamSink<Value>) -> Result<()> {
+    pub async fn watch(&self, resource: String, sink: StreamSink<DBNotification>) -> Result<()> {
         let mut stream = self
             .surreal
             .select(parse_resource(resource))
@@ -179,7 +196,8 @@ impl SurrealProxy {
             .await
             .with_context(|| "Surreal::select(...).live")?;
         while let Some(result) = stream.next().await {
-            sink.add(result.data)
+            // result.action
+            sink.add(result.into())
                 .map_err(|a| anyhow::format_err!("Rust to dart Error: {}", a.to_string()))?;
         }
         Ok(())
@@ -237,21 +255,20 @@ impl SurrealProxy {
         Ok(())
     }
 
-    pub async fn query(
-        &self,
-        query: String,
-        vars: HashMap<String, Value>,
-    ) -> Result<Vec<Value>> {
+    pub async fn query(&self, query: String, vars: HashMap<String, Value>) -> Result<Vec<Value>> {
         //TODO: Chaining
-        let mut res=self
-        .surreal
-        .query(query)
-        .bind(vars)
-        .await
-        .with_context(|| "Surreal::query_single")?;
-        let mut vec=Vec::with_capacity(res.num_statements());
+        let mut res = self
+            .surreal
+            .query(query)
+            .bind(vars)
+            .await
+            .with_context(|| "Surreal::query_single")?;
+        let mut vec = Vec::with_capacity(res.num_statements());
         for i in 0..res.num_statements() {
-            vec.push(res.take(i).with_context(||"Failed taking the result of the Query")?);
+            vec.push(
+                res.take(i)
+                    .with_context(|| "Failed taking the result of the Query")?,
+            );
         }
         Ok(vec)
     }

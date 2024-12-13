@@ -81,7 +81,7 @@ void main() {
     final DBRecord record = insert["id"];
     data["id"] = record;
     var lateststream;
-    db.selectStream(res: const DBTable("test")).listen((event) {
+    db.watch(res: const DBTable("test")).listen((event) {
       lateststream = event;
     });
     data["hello"] = "world2";
@@ -145,7 +145,7 @@ void main() {
     final DBRecord record = insert["id"];
     data["id"] = record;
     var lateststream;
-    db.selectStream(res: record).listen((event) {
+    db.watch(res: record).listen((event) {
       lateststream = event;
     });
     data["hello"] = "world2";

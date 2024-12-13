@@ -36,8 +36,8 @@ extension type SurrealDB(rust.SurrealProxy _surreal) {
     return await _surreal.select(resource: res.resource);
   }
 
-  Stream<dynamic> selectStream({required Resource res}) {
-    return _surreal.selectLive(resource: res.resource);
+  Stream<dynamic> watch({required Resource res}) {
+    return _surreal.watch(resource: res.resource);
   }
 
   Future<dynamic> updateContent(

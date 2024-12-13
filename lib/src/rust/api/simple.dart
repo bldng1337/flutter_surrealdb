@@ -9,9 +9,13 @@ import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `parse_resource`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `from`
 
 String greet({required String name}) =>
     RustLib.instance.api.crateApiSimpleGreet(name: name);
+
+// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<DBNotification>>
+abstract class DbNotification implements RustOpaqueInterface {}
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<SurrealProxy>>
 abstract class SurrealProxy implements RustOpaqueInterface {
@@ -42,8 +46,6 @@ abstract class SurrealProxy implements RustOpaqueInterface {
 
   Future<dynamic> select({required String resource});
 
-  Stream<dynamic> selectLive({required String resource});
-
   Future<void> set_({required String key, required dynamic value});
 
   Future<String> signin(
@@ -73,4 +75,6 @@ abstract class SurrealProxy implements RustOpaqueInterface {
   Future<void> useNs({required String namespace});
 
   Future<String> version();
+
+  Stream<DbNotification> watch({required String resource});
 }
