@@ -4,6 +4,7 @@ import 'package:flutter_surrealdb/src/rust/api/simple.dart' as rust;
 
 export 'src/rust/api/simple.dart';
 export 'src/rust/frb_generated.dart' show RustLib;
+export 'src/rust/api/simple.dart' show DbNotification;
 
 extension type SurrealDB(rust.SurrealProxy _surreal) {
   static Future<SurrealDB> newMem() async {
@@ -36,7 +37,7 @@ extension type SurrealDB(rust.SurrealProxy _surreal) {
     return await _surreal.select(resource: res.resource);
   }
 
-  Stream<dynamic> watch({required Resource res}) {
+  Stream<rust.DbNotification> watch({required Resource res}) {
     return _surreal.watch(resource: res.resource);
   }
 
