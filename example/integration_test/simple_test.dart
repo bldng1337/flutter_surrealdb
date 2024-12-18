@@ -66,7 +66,7 @@ void main() {
     expect(result2, data);
   });
 
-  test("Wrapper multiselectLive", () async {
+  test("Wrapper multi watch", () async {
     final db = await SurrealDB.newMem();
     await db.useNs(namespace: "test");
     await db.useDb(db: "test");
@@ -82,7 +82,8 @@ void main() {
     data["id"] = record;
     var lateststream;
     db.watch(res: const DBTable("test")).listen((event) {
-      lateststream = event;
+      expect(event.action, Action.update);
+      lateststream = event.value;
     });
     data["hello"] = "world2";
     await db.updateContent(res: record, data: data);
@@ -130,7 +131,7 @@ void main() {
     expect(result, data);
   });
 
-  test("Wrapper selectStream", () async {
+  test("Wrapper watch", () async {
     final db = await SurrealDB.newMem();
     await db.useNs(namespace: "test");
     await db.useDb(db: "test");
@@ -169,10 +170,10 @@ void main() {
     final DBRecord record = insert["id"];
     data["id"] = record;
     final result = await db.query(query: "SELECT * FROM test");
-    expect(result, [data]);
+    expect(result, [[data]]);
   });
 
-  test("Wrapper query", () async {
+  test("Wrapper query2", () async {
     final db = await SurrealDB.newMem();
     await db.useNs(namespace: "test");
     await db.useDb(db: "test");
@@ -188,10 +189,10 @@ void main() {
     data["id"] = record;
     final result =
         await db.query(query: "SELECT * FROM \$id", vars: {"id": record});
-    expect(result, [data]);
+    expect(result, [[data]]);
   });
 
-  test("Wrapper query", () async {
+  test("Wrapper query3", () async {
     final db = await SurrealDB.newMem();
     await db.useNs(namespace: "test");
     await db.useDb(db: "test");
@@ -206,6 +207,6 @@ void main() {
     final DBRecord record = insert["id"];
     data["id"] = record;
     final result = await db.query(query: "RETURN false;");
-    print(result);
+    expect(result, [false]);
   });
 }

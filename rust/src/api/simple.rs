@@ -12,7 +12,7 @@ use surrealdb::engine::local::SurrealKv;
 use surrealdb::opt::auth::Record;
 use surrealdb::opt::Resource;
 pub use surrealdb::sql::Value as Other;
-use surrealdb::Action;
+pub use surrealdb::Action as SurrealAction;
 use surrealdb::Notification;
 use surrealdb::RecordId;
 pub use surrealdb::Value;
@@ -46,15 +46,31 @@ fn parse_resource(resource: String) -> Resource {
     Resource::Table(resource)
 }
 
+pub enum Action {
+    Create,
+    Update,
+    Delete,
+}
+impl From<SurrealAction> for Action {
+    fn from(value: SurrealAction) -> Self {
+        match value {
+            SurrealAction::Create => Action::Create,
+            SurrealAction::Update => Action::Update,
+            SurrealAction::Delete => Action::Delete,
+            _ => panic!(),
+        }
+    }
+}
+
 pub struct DBNotification {
-    action: Action,
-    value: Value,
-    uuid: String,
+    pub action: Action,
+    pub value: Value,
+    pub uuid: String,
 }
 impl From<Notification<Value>> for DBNotification {
     fn from(value: Notification<Value>) -> Self {
         DBNotification {
-            action: value.action,
+            action: Action::from(value.action),
             value: value.data,
             uuid: value.query_id.to_string(),
         }
@@ -196,7 +212,6 @@ impl SurrealProxy {
             .await
             .with_context(|| "Surreal::select(...).live")?;
         while let Some(result) = stream.next().await {
-            // result.action
             sink.add(result.into())
                 .map_err(|a| anyhow::format_err!("Rust to dart Error: {}", a.to_string()))?;
         }

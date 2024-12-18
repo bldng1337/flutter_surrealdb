@@ -9,13 +9,10 @@ import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `parse_resource`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `from`, `from`
 
 String greet({required String name}) =>
     RustLib.instance.api.crateApiSimpleGreet(name: name);
-
-// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<DBNotification>>
-abstract class DbNotification implements RustOpaqueInterface {}
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<SurrealProxy>>
 abstract class SurrealProxy implements RustOpaqueInterface {
@@ -76,5 +73,36 @@ abstract class SurrealProxy implements RustOpaqueInterface {
 
   Future<String> version();
 
-  Stream<DbNotification> watch({required String resource});
+  Stream<DBNotification> watch({required String resource});
+}
+
+enum Action {
+  create,
+  update,
+  delete,
+  ;
+}
+
+class DBNotification {
+  final Action action;
+  final dynamic value;
+  final String uuid;
+
+  const DBNotification({
+    required this.action,
+    required this.value,
+    required this.uuid,
+  });
+
+  @override
+  int get hashCode => action.hashCode ^ value.hashCode ^ uuid.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is DBNotification &&
+          runtimeType == other.runtimeType &&
+          action == other.action &&
+          value == other.value &&
+          uuid == other.uuid;
 }
