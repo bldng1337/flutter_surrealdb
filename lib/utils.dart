@@ -29,12 +29,12 @@ dynamic surrencodeType(String value) {
           return value["Object"];
         } else if (value.containsKey("Datetime")) {
           return DateTime.tryParse(value["Datetime"]);
-        } else if (value.containsKey("Uuid")){
+        } else if (value.containsKey("Uuid")) {
           return value["Uuid"];
         }
       }
     }
-    if(value=="Null" || value=="None"){
+    if (value == "Null" || value == "None") {
       return null;
     }
     return value;
@@ -58,10 +58,26 @@ dynamic wrap(dynamic value) {
     final num val => {
         "Number": {"Float": val.toDouble()}
       },
+    final DateTime val => wrapDateTime(val),
     final DBRecord val => wrap(val.toJson()),
     final Map<String, dynamic> val => wrapMap(val),
     _ => throw Exception("Can't encode $value")
   };
+}
+
+Map<String, dynamic> wrapDateTime(DateTime value) {
+  if (value.isUtc) {
+    return {"Datetime": value.toIso8601String()};
+  }
+  return {
+    "Datetime":
+        "${value.toIso8601String()}+${_twoDigits(value.timeZoneOffset.inHours)}:${_twoDigits(value.timeZoneOffset.inMinutes % 60)}"
+  };
+}
+
+String _twoDigits(int n) {
+  if (n >= 10) return "$n";
+  return "0$n";
 }
 
 Map<String, dynamic> wrapMap(Map<String, dynamic> map) {

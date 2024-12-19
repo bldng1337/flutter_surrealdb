@@ -147,7 +147,7 @@ void main() {
     data["id"] = record;
     var lateststream;
     db.watch(res: record).listen((event) {
-      lateststream = event;
+      lateststream = event.value;
     });
     data["hello"] = "world2";
     await db.updateContent(res: record, data: data);
@@ -170,7 +170,9 @@ void main() {
     final DBRecord record = insert["id"];
     data["id"] = record;
     final result = await db.query(query: "SELECT * FROM test");
-    expect(result, [[data]]);
+    expect(result, [
+      [data]
+    ]);
   });
 
   test("Wrapper query2", () async {
@@ -189,7 +191,9 @@ void main() {
     data["id"] = record;
     final result =
         await db.query(query: "SELECT * FROM \$id", vars: {"id": record});
-    expect(result, [[data]]);
+    expect(result, [
+      [data]
+    ]);
   });
 
   test("Wrapper query3", () async {
@@ -208,5 +212,36 @@ void main() {
     data["id"] = record;
     final result = await db.query(query: "RETURN false;");
     expect(result, [false]);
+  });
+
+  test("Test datatypes", () async {
+    final db = await SurrealDB.newMem();
+    await db.useNs(namespace: "test");
+    await db.useDb(db: "test");
+    var data = {
+      "hello": "world",
+      "num": 1,
+      "array": ["test1", "test2"],
+      "object": {"test": "test"}
+    };
+    final insert = await db.insert(res: const DBTable("test"), data: data);
+    expect(insert["id"], isA<DBRecord>());
+    final DBRecord record = insert["id"];
+    data["id"] = record;
+    final obj = {
+      "sid": const DBRecord("test", "test"),
+      "num": 2,
+      "num2": 2.3,
+      "bool": true,
+      "string": "test",
+      "array": ["test1", "test2"],
+      "object": {"test": "test"},
+      // "datetime": DateTime.now(),
+      "datetimeutc": DateTime.now().toUtc(),
+      // "uuid": "12345678-1234-1234-1234-123456789012" TODO: Fix UUID
+    };
+    final result = await db.query(query: "RETURN \$obj;",vars: {"obj": obj});
+    expect(result, [obj]);
+    
   });
 }
