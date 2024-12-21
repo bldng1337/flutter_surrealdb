@@ -240,8 +240,37 @@ void main() {
       "datetimeutc": DateTime.now().toUtc(),
       // "uuid": "12345678-1234-1234-1234-123456789012" TODO: Fix UUID
     };
-    final result = await db.query(query: "RETURN \$obj;",vars: {"obj": obj});
+    final result = await db.query(query: "RETURN \$obj;", vars: {"obj": obj});
     expect(result, [obj]);
-    
+  });
+
+  test("Wrapper lock", () async {
+    final db = await SurrealDB.newMem();
+    await db.useNs(namespace: "test");
+    await db.useDb(db: "test");
+    var data = {
+      "hello": "world",
+      "num": 1,
+      "array": ["test1", "test2"],
+      "object": {"test": "test"}
+    };
+    final insert = await db.insert(res: const DBTable("test"), data: data);
+    expect(insert["id"], isA<DBRecord>());
+    final DBRecord record = insert["id"];
+    data["id"] = record;
+    f1() async {
+      await db.use(db: "test1", namespace: "test2");
+    }
+    f2() async {
+      await db.lock((db) async {
+        await db.useNs(namespace: "test");
+        await db.useDb(db: "test");
+        await Future.delayed(const Duration(seconds: 1));
+        final result2 = await db.select(res: record);
+        expect(result2, data);
+      });
+    }
+
+    await Future.wait([f1(), f2()]);
   });
 }
