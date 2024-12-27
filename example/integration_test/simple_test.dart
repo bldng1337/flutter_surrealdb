@@ -233,6 +233,7 @@ void main() {
       "num": 2,
       "num2": 2.3,
       "bool": true,
+      "null": null,
       "string": "test",
       "array": ["test1", "test2"],
       "object": {"test": "test"},

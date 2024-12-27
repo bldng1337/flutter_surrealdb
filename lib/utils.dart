@@ -48,6 +48,9 @@ String surrdecodeType(dynamic value) {
 }
 
 dynamic wrap(dynamic value) {
+  if(value ==null){
+    return "Null";
+  }
   return switch (value) {
     final List<dynamic> val => {"Array": val.map(wrap).toList()},
     final String val => {"Strand": val},
