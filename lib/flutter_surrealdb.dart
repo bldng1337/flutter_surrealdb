@@ -392,14 +392,6 @@ class DBTable implements Resource {
   String get resource => tb;
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is DBTable && runtimeType == other.runtimeType && tb == other.tb;
-
-  @override
-  int get hashCode => tb.hashCode;
-
-  @override
   String toString() => "DBTable(tb: $tb)";
 }
 
@@ -428,15 +420,4 @@ class DBRecord implements Resource {
   String toString() {
     return "Record(tb: $tb, id: $id)";
   }
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is DBRecord &&
-          runtimeType == other.runtimeType &&
-          tb == other.tb &&
-          id == other.id;
-
-  @override
-  int get hashCode => tb.hashCode ^ id.hashCode;
 }
