@@ -831,10 +831,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "dart-sys-fork"
-version = "4.1.1"
+name = "dart-sys"
+version = "4.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "933dafff26172b719bb9695dd3715a1e7792f62dcdc8a5d4c740db7e0fedee8b"
+checksum = "57967e4b200d767d091b961d6ab42cc7d0cc14fe9e052e75d0d3cf9eb732d895"
 dependencies = [
  "cc",
 ]
@@ -1073,9 +1073,9 @@ checksum = "8bf7cc16383c4b8d58b9905a8509f02926ce3058053c056376248d958c9df1e8"
 
 [[package]]
 name = "flutter_rust_bridge"
-version = "2.5.1"
+version = "2.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2f052ec223b70cbdf2248376a9ad5af9281b3fdf8ea3c7d3f66fff52a9aaf1fa"
+checksum = "fdc62f583dff79c7ea34b775b2cc4158adc17cb69ad4c1d276be7fe95c63d597"
 dependencies = [
  "allo-isolate",
  "android_logger",
@@ -1084,7 +1084,7 @@ dependencies = [
  "bytemuck",
  "byteorder",
  "console_error_panic_hook",
- "dart-sys-fork",
+ "dart-sys",
  "delegate-attr",
  "flutter_rust_bridge_macros",
  "futures",
@@ -1102,9 +1102,9 @@ dependencies = [
 
 [[package]]
 name = "flutter_rust_bridge_macros"
-version = "2.5.1"
+version = "2.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "23414fe526f51870c6d89d27bbffbee52ebe0900164a4147b32caf1d3e131682"
+checksum = "ac75354933904c334c13a7c9e08c65be528f0820ab587e03f255203a28d5efec"
 dependencies = [
  "hex",
  "md-5",
