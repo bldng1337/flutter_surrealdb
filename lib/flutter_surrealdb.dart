@@ -420,4 +420,15 @@ class DBRecord implements Resource {
   String toString() {
     return "Record(tb: $tb, id: $id)";
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is DBRecord &&
+          runtimeType == other.runtimeType &&
+          tb == other.tb &&
+          id == other.id;
+
+  @override
+  int get hashCode => tb.hashCode ^ id.hashCode;
 }
