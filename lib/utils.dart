@@ -64,7 +64,7 @@ dynamic wrap(dynamic value) {
     final DateTime val => wrapDateTime(val),
     final DBRecord val => wrap(val.toJson()),
     final Map<String, dynamic> val => wrapMap(val),
-    _ => throw Exception("Can't encode $value")
+    _ => wrap(value.toJson()),
   };
 }
 
