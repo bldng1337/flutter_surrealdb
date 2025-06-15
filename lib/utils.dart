@@ -64,7 +64,15 @@ dynamic wrap(dynamic value) {
     final DateTime val => wrapDateTime(val),
     final DBRecord val => wrap(val.toJson()),
     final Map<String, dynamic> val => wrapMap(val),
-    _ => wrap(value.toJson()),
+    _ => () {
+      // Best-effort serialisation; fall back to a clear error.
+      try {
+        return wrap((value as dynamic).toJson());
+      } on NoSuchMethodError {
+        throw UnsupportedError(
+            'Surreal: value of type ${value.runtimeType} is not serialisable');
+      }
+    }(),
   };
 }
 

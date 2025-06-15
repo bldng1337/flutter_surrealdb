@@ -38,7 +38,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.10.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -2036826091;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -935837776;
 
 // Section: executor
 
@@ -366,7 +366,7 @@ fn wire__crate__api__simple__SurrealProxy_insert_impl(
                 flutter_rust_bridge::for_generated::RustAutoOpaqueInner<SurrealProxy>,
             >>::sse_decode(&mut deserializer);
             let api_res = <String>::sse_decode(&mut deserializer);
-            let api_data = <Value>::sse_decode(&mut deserializer);
+            let api_data = <SurrealValue>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| async move {
                 transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
@@ -557,7 +557,7 @@ fn wire__crate__api__simple__SurrealProxy_query_impl(
             >>::sse_decode(&mut deserializer);
             let api_query = <String>::sse_decode(&mut deserializer);
             let api_vars =
-                <std::collections::HashMap<String, Value>>::sse_decode(&mut deserializer);
+                <std::collections::HashMap<String, SurrealValue>>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| async move {
                 transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
@@ -619,7 +619,7 @@ fn wire__crate__api__simple__SurrealProxy_run_impl(
                 flutter_rust_bridge::for_generated::RustAutoOpaqueInner<SurrealProxy>,
             >>::sse_decode(&mut deserializer);
             let api_function = <String>::sse_decode(&mut deserializer);
-            let api_args = <Value>::sse_decode(&mut deserializer);
+            let api_args = <SurrealValue>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| async move {
                 transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
@@ -741,7 +741,7 @@ fn wire__crate__api__simple__SurrealProxy_set_impl(
                 flutter_rust_bridge::for_generated::RustAutoOpaqueInner<SurrealProxy>,
             >>::sse_decode(&mut deserializer);
             let api_key = <String>::sse_decode(&mut deserializer);
-            let api_value = <Value>::sse_decode(&mut deserializer);
+            let api_value = <SurrealValue>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| async move {
                 transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
@@ -805,7 +805,7 @@ fn wire__crate__api__simple__SurrealProxy_signin_impl(
             let api_namespace = <String>::sse_decode(&mut deserializer);
             let api_database = <String>::sse_decode(&mut deserializer);
             let api_access = <String>::sse_decode(&mut deserializer);
-            let api_extra = <Value>::sse_decode(&mut deserializer);
+            let api_extra = <SurrealValue>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| async move {
                 transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
@@ -871,7 +871,7 @@ fn wire__crate__api__simple__SurrealProxy_signup_impl(
             let api_namespace = <String>::sse_decode(&mut deserializer);
             let api_database = <String>::sse_decode(&mut deserializer);
             let api_access = <String>::sse_decode(&mut deserializer);
-            let api_extra = <Value>::sse_decode(&mut deserializer);
+            let api_extra = <SurrealValue>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| async move {
                 transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
@@ -993,7 +993,7 @@ fn wire__crate__api__simple__SurrealProxy_update_content_impl(
                 flutter_rust_bridge::for_generated::RustAutoOpaqueInner<SurrealProxy>,
             >>::sse_decode(&mut deserializer);
             let api_resource = <String>::sse_decode(&mut deserializer);
-            let api_data = <Value>::sse_decode(&mut deserializer);
+            let api_data = <SurrealValue>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| async move {
                 transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
@@ -1055,7 +1055,7 @@ fn wire__crate__api__simple__SurrealProxy_update_merge_impl(
                 flutter_rust_bridge::for_generated::RustAutoOpaqueInner<SurrealProxy>,
             >>::sse_decode(&mut deserializer);
             let api_resource = <String>::sse_decode(&mut deserializer);
-            let api_data = <Value>::sse_decode(&mut deserializer);
+            let api_data = <SurrealValue>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| async move {
                 transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
@@ -1117,7 +1117,7 @@ fn wire__crate__api__simple__SurrealProxy_upsert_impl(
                 flutter_rust_bridge::for_generated::RustAutoOpaqueInner<SurrealProxy>,
             >>::sse_decode(&mut deserializer);
             let api_res = <String>::sse_decode(&mut deserializer);
-            let api_data = <Value>::sse_decode(&mut deserializer);
+            let api_data = <SurrealValue>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| async move {
                 transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
@@ -1392,36 +1392,6 @@ fn wire__crate__api__simple__SurrealProxy_watch_impl(
         },
     )
 }
-fn wire__crate__api__simple__greet_impl(
-    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
-    rust_vec_len_: i32,
-    data_len_: i32,
-) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
-        flutter_rust_bridge::for_generated::TaskInfo {
-            debug_name: "greet",
-            port: None,
-            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
-        },
-        move || {
-            let message = unsafe {
-                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
-                    ptr_,
-                    rust_vec_len_,
-                    data_len_,
-                )
-            };
-            let mut deserializer =
-                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_name = <String>::sse_decode(&mut deserializer);
-            deserializer.end();
-            transform_result_sse::<_, ()>((move || {
-                let output_ok = Result::<_, ()>::Ok(crate::api::simple::greet(api_name))?;
-                Ok(output_ok)
-            })())
-        },
-    )
-}
 fn wire__crate__api__simple__init_app_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -1483,7 +1453,7 @@ impl SseDecode for SurrealProxy {
     }
 }
 
-impl SseDecode for Value {
+impl SseDecode for SurrealValue {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut inner = <String>::sse_decode(deserializer);
@@ -1491,10 +1461,10 @@ impl SseDecode for Value {
     }
 }
 
-impl SseDecode for std::collections::HashMap<String, Value> {
+impl SseDecode for std::collections::HashMap<String, SurrealValue> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        let mut inner = <Vec<(String, Value)>>::sse_decode(deserializer);
+        let mut inner = <Vec<(String, SurrealValue)>>::sse_decode(deserializer);
         return inner.into_iter().collect();
     }
 }
@@ -1544,7 +1514,7 @@ impl SseDecode for crate::api::simple::DBNotification {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_action = <crate::api::simple::Action>::sse_decode(deserializer);
-        let mut var_value = <Value>::sse_decode(deserializer);
+        let mut var_value = <SurrealValue>::sse_decode(deserializer);
         let mut var_uuid = <String>::sse_decode(deserializer);
         return crate::api::simple::DBNotification {
             action: var_action,
@@ -1561,13 +1531,13 @@ impl SseDecode for i32 {
     }
 }
 
-impl SseDecode for Vec<Value> {
+impl SseDecode for Vec<SurrealValue> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut len_ = <i32>::sse_decode(deserializer);
         let mut ans_ = vec![];
         for idx_ in 0..len_ {
-            ans_.push(<Value>::sse_decode(deserializer));
+            ans_.push(<SurrealValue>::sse_decode(deserializer));
         }
         return ans_;
     }
@@ -1585,23 +1555,23 @@ impl SseDecode for Vec<u8> {
     }
 }
 
-impl SseDecode for Vec<(String, Value)> {
+impl SseDecode for Vec<(String, SurrealValue)> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut len_ = <i32>::sse_decode(deserializer);
         let mut ans_ = vec![];
         for idx_ in 0..len_ {
-            ans_.push(<(String, Value)>::sse_decode(deserializer));
+            ans_.push(<(String, SurrealValue)>::sse_decode(deserializer));
         }
         return ans_;
     }
 }
 
-impl SseDecode for (String, Value) {
+impl SseDecode for (String, SurrealValue) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_field0 = <String>::sse_decode(deserializer);
-        let mut var_field1 = <Value>::sse_decode(deserializer);
+        let mut var_field1 = <SurrealValue>::sse_decode(deserializer);
         return (var_field0, var_field1);
     }
 }
@@ -1691,7 +1661,7 @@ fn pde_ffi_dispatcher_primary_impl(
             wire__crate__api__simple__SurrealProxy_version_impl(port, ptr, rust_vec_len, data_len)
         }
         23 => wire__crate__api__simple__SurrealProxy_watch_impl(port, ptr, rust_vec_len, data_len),
-        25 => wire__crate__api__simple__init_app_impl(port, ptr, rust_vec_len, data_len),
+        24 => wire__crate__api__simple__init_app_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -1704,7 +1674,6 @@ fn pde_ffi_dispatcher_sync_impl(
 ) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-        24 => wire__crate__api__simple__greet_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -1727,14 +1696,14 @@ impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<SurrealProxy>> for SurrealProx
 }
 
 // Codec=Dco (DartCObject based), see doc to use other codecs
-impl flutter_rust_bridge::IntoDart for FrbWrapper<Value> {
+impl flutter_rust_bridge::IntoDart for FrbWrapper<SurrealValue> {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         unimplemented!()
     }
 }
-impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<Value> {}
-impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<Value>> for Value {
-    fn into_into_dart(self) -> FrbWrapper<Value> {
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<SurrealValue> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<SurrealValue>> for SurrealValue {
+    fn into_into_dart(self) -> FrbWrapper<SurrealValue> {
         self.into()
     }
 }
@@ -1792,17 +1761,17 @@ impl SseEncode for SurrealProxy {
     }
 }
 
-impl SseEncode for Value {
+impl SseEncode for SurrealValue {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <String>::sse_encode(crate::api::simple::encode_fancy_type(self), serializer);
     }
 }
 
-impl SseEncode for std::collections::HashMap<String, Value> {
+impl SseEncode for std::collections::HashMap<String, SurrealValue> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <Vec<(String, Value)>>::sse_encode(self.into_iter().collect(), serializer);
+        <Vec<(String, SurrealValue)>>::sse_encode(self.into_iter().collect(), serializer);
     }
 }
 
@@ -1854,7 +1823,7 @@ impl SseEncode for crate::api::simple::DBNotification {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <crate::api::simple::Action>::sse_encode(self.action, serializer);
-        <Value>::sse_encode(self.value, serializer);
+        <SurrealValue>::sse_encode(self.value, serializer);
         <String>::sse_encode(self.uuid, serializer);
     }
 }
@@ -1866,12 +1835,12 @@ impl SseEncode for i32 {
     }
 }
 
-impl SseEncode for Vec<Value> {
+impl SseEncode for Vec<SurrealValue> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
-            <Value>::sse_encode(item, serializer);
+            <SurrealValue>::sse_encode(item, serializer);
         }
     }
 }
@@ -1886,21 +1855,21 @@ impl SseEncode for Vec<u8> {
     }
 }
 
-impl SseEncode for Vec<(String, Value)> {
+impl SseEncode for Vec<(String, SurrealValue)> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
-            <(String, Value)>::sse_encode(item, serializer);
+            <(String, SurrealValue)>::sse_encode(item, serializer);
         }
     }
 }
 
-impl SseEncode for (String, Value) {
+impl SseEncode for (String, SurrealValue) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <String>::sse_encode(self.0, serializer);
-        <Value>::sse_encode(self.1, serializer);
+        <SurrealValue>::sse_encode(self.1, serializer);
     }
 }
 

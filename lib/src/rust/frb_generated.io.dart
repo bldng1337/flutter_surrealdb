@@ -39,12 +39,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   dynamic
-      dco_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
+      dco_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
           dynamic raw);
 
   @protected
   Map<String, dynamic>
-      dco_decode_Map_String_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue_None(
+      dco_decode_Map_String_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue_None(
           dynamic raw);
 
   @protected
@@ -70,7 +70,7 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<dynamic>
-      dco_decode_list_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
+      dco_decode_list_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
           dynamic raw);
 
   @protected
@@ -78,14 +78,14 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<(String, dynamic)>
-      dco_decode_list_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_value(
+      dco_decode_list_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_surreal_value(
           dynamic raw);
 
   @protected
   (
     String,
     dynamic
-  ) dco_decode_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_value(
+  ) dco_decode_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_surreal_value(
       dynamic raw);
 
   @protected
@@ -112,12 +112,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   dynamic
-      sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
+      sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
           SseDeserializer deserializer);
 
   @protected
   Map<String, dynamic>
-      sse_decode_Map_String_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue_None(
+      sse_decode_Map_String_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue_None(
           SseDeserializer deserializer);
 
   @protected
@@ -143,7 +143,7 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<dynamic>
-      sse_decode_list_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
+      sse_decode_list_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
           SseDeserializer deserializer);
 
   @protected
@@ -151,14 +151,14 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<(String, dynamic)>
-      sse_decode_list_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_value(
+      sse_decode_list_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_surreal_value(
           SseDeserializer deserializer);
 
   @protected
   (
     String,
     dynamic
-  ) sse_decode_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_value(
+  ) sse_decode_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_surreal_value(
       SseDeserializer deserializer);
 
   @protected
@@ -189,12 +189,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void
-      sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
+      sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
           dynamic self, SseSerializer serializer);
 
   @protected
   void
-      sse_encode_Map_String_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue_None(
+      sse_encode_Map_String_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue_None(
           Map<String, dynamic> self, SseSerializer serializer);
 
   @protected
@@ -221,7 +221,7 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void
-      sse_encode_list_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
+      sse_encode_list_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
           List<dynamic> self, SseSerializer serializer);
 
   @protected
@@ -230,12 +230,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void
-      sse_encode_list_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_value(
+      sse_encode_list_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_surreal_value(
           List<(String, dynamic)> self, SseSerializer serializer);
 
   @protected
   void
-      sse_encode_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_value(
+      sse_encode_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_surreal_value(
           (String, dynamic) self, SseSerializer serializer);
 
   @protected

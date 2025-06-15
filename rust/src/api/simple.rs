@@ -1,36 +1,29 @@
 use std::collections::HashMap;
 
 use crate::frb_generated::StreamSink;
+pub use crate::private::wrapper::SurrealValue;
 use anyhow::Context;
 use anyhow::Result;
 use flutter_rust_bridge::frb;
 use futures::stream::StreamExt;
-pub use serde_json::Value as Json;
 use surrealdb::engine::local::Db;
 use surrealdb::engine::local::Mem;
 use surrealdb::engine::local::SurrealKv;
 use surrealdb::opt::auth::Record;
 use surrealdb::opt::Resource;
-pub use surrealdb::sql::Value as Other;
-pub use surrealdb::Action as SurrealAction;
+use surrealdb::Action as SurrealAction;
 use surrealdb::Notification;
 use surrealdb::RecordId;
-pub use surrealdb::Value;
+use surrealdb::Value;
 
 #[frb(rust2dart(dart_type = "dynamic", dart_code = "surrencodeType({})"))]
-pub fn encode_fancy_type(raw: Value) -> String {
-    serde_json::to_string(&raw).unwrap()
-    //TODO: a.into_inner()
+pub fn encode_fancy_type(raw: SurrealValue) -> String {
+    raw.into()
 }
 
 #[frb(dart2rust(dart_type = "dynamic", dart_code = "surrdecodeType({})"))]
-pub fn decode_fancy_type(raw: String) -> Value {
-    serde_json::from_str(&raw).unwrap()
-}
-
-#[flutter_rust_bridge::frb(sync)] // Synchronous mode for simplicity of the demo
-pub fn greet(name: String) -> String {
-    format!("Hello, {name}!")
+pub fn decode_fancy_type(raw: String) -> SurrealValue {
+    raw.into()
 }
 
 #[flutter_rust_bridge::frb(opaque)]
@@ -64,16 +57,19 @@ impl From<SurrealAction> for Action {
 
 pub struct DBNotification {
     pub action: Action,
-    pub value: Value,
+    pub value: SurrealValue,
     pub uuid: String,
 }
-impl From<Notification<Value>> for DBNotification {
-    fn from(value: Notification<Value>) -> Self {
-        DBNotification {
-            action: Action::from(value.action),
-            value: value.data,
+
+impl TryFrom<Notification<Value>> for DBNotification {
+    type Error = anyhow::Error;
+
+    fn try_from(value: Notification<Value>) -> std::result::Result<Self, Self::Error> {
+        Ok(Self {
+            action: value.action.into(),
             uuid: value.query_id.to_string(),
-        }
+            value: value.data.try_into()?,
+        })
     }
 }
 
@@ -111,8 +107,11 @@ impl SurrealProxy {
         namespace: String,
         database: String,
         access: String,
-        extra: Value,
+        extra: SurrealValue,
     ) -> Result<String> {
+        let extra: Value = extra
+            .try_into()
+            .context("Failed to convert to Surreal Value")?;
         Ok(self
             .surreal
             .signup(Record {
@@ -131,8 +130,11 @@ impl SurrealProxy {
         namespace: String,
         database: String,
         access: String,
-        extra: Value,
+        extra: SurrealValue,
     ) -> Result<String> {
+        let extra: Value = extra
+            .try_into()
+            .context("Failed to convert to Surreal Value")?;
         Ok(self
             .surreal
             .signin(Record {
@@ -162,7 +164,10 @@ impl SurrealProxy {
         Ok(())
     }
 
-    pub async fn set(&self, key: String, value: Value) -> Result<()> {
+    pub async fn set(&self, key: String, value: SurrealValue) -> Result<()> {
+        let value: Value = value
+            .try_into()
+            .context("Failed to convert to Surreal Value")?;
         self.surreal
             .set(key, value)
             .await
@@ -179,7 +184,6 @@ impl SurrealProxy {
     }
 
     pub async fn use_ns(&self, namespace: String) -> Result<()> {
-        //TODO: Chaining
         self.surreal
             .use_ns(namespace)
             .await
@@ -195,13 +199,13 @@ impl SurrealProxy {
         Ok(())
     }
 
-    pub async fn select(&self, resource: String) -> Result<Value> {
-        //TODO: Chaining
-        Ok(self
-            .surreal
+    pub async fn select(&self, resource: String) -> Result<SurrealValue> {
+        self.surreal
             .select(parse_resource(resource))
             .await
-            .with_context(|| "Surreal::select_all")?)
+            .with_context(|| "Surreal::select_all")?
+            .try_into()
+            .context("Failed to convert to Surreal Value")
     }
 
     pub async fn watch(&self, resource: String, sink: StreamSink<DBNotification>) -> Result<()> {
@@ -212,57 +216,73 @@ impl SurrealProxy {
             .await
             .with_context(|| "Surreal::select(...).live")?;
         while let Some(result) = stream.next().await {
-            sink.add(result.into())
+            sink.add(result.try_into()?)
                 .map_err(|a| anyhow::format_err!("Rust to dart Error: {}", a.to_string()))?;
         }
         Ok(())
     }
 
-    pub async fn insert(&self, res: String, data: Value) -> Result<Value> {
-        //TODO: Chaining
-        Ok(self
-            .surreal
+    pub async fn insert(&self, res: String, data: SurrealValue) -> Result<SurrealValue> {
+        let data: Value = data
+            .try_into()
+            .context("Failed to convert to Surreal Value")?;
+        self.surreal
             .insert(parse_resource(res))
             .content(data)
             .await
-            .with_context(|| "Surreal::insert(...).content")?)
+            .with_context(|| "Surreal::insert(...).content")?
+            .try_into()
+            .context("Failed to convert to Surreal Value")
     }
 
-    pub async fn upsert(&self, res: String, data: Value) -> Result<Value> {
-        //TODO: Chaining
-        Ok(self
-            .surreal
+    pub async fn upsert(&self, res: String, data: SurrealValue) -> Result<SurrealValue> {
+        let data: Value = data
+            .try_into()
+            .context("Failed to convert to Surreal Value")?;
+        self.surreal
             .upsert(parse_resource(res))
             .content(data)
             .await
-            .with_context(|| "Surreal::upsert(...).content")?)
+            .with_context(|| "Surreal::upsert(...).content")?
+            .try_into()
+            .context("Failed to convert Surreal Value")
     }
 
-    pub async fn create(&self, res: String) -> Result<Value> {
-        //TODO: Chaining
-        Ok(self
-            .surreal
+    pub async fn create(&self, res: String) -> Result<SurrealValue> {
+        self.surreal
             .create(parse_resource(res))
             .await
-            .with_context(|| "Surreal::create")?)
+            .with_context(|| "Surreal::create")?
+            .try_into()
+            .context("Failed to convert Surreal Value")
     }
 
-    pub async fn update_content(&self, resource: String, data: Value) -> Result<Value> {
-        //TODO: Chaining
-        Ok(self
-            .surreal
+    pub async fn update_content(
+        &self,
+        resource: String,
+        data: SurrealValue,
+    ) -> Result<SurrealValue> {
+        let data: Value = data
+            .try_into()
+            .context("Failed to convert to Surreal Value")?;
+        self.surreal
             .update(parse_resource(resource))
             .content(data)
-            .await?)
+            .await?
+            .try_into()
+            .context("Failed to convert Surreal Value")
     }
 
-    pub async fn update_merge(&self, resource: String, data: Value) -> Result<Value> {
-        //TODO: Chaining
-        Ok(self
-            .surreal
+    pub async fn update_merge(&self, resource: String, data: SurrealValue) -> Result<SurrealValue> {
+        let data: Value = data
+            .try_into()
+            .context("Failed to convert to Surreal Value")?;
+        self.surreal
             .update(parse_resource(resource))
             .merge(data)
-            .await?)
+            .await?
+            .try_into()
+            .context("Failed to convert Surreal Value")
     }
 
     pub async fn delete(&self, resource: String) -> Result<()> {
@@ -270,32 +290,43 @@ impl SurrealProxy {
         Ok(())
     }
 
-    pub async fn query(&self, query: String, vars: HashMap<String, Value>) -> Result<Vec<Value>> {
-        //TODO: Chaining
+    pub async fn query(
+        &self,
+        query: String,
+        vars: HashMap<String, SurrealValue>,
+    ) -> Result<Vec<SurrealValue>> {
+        let mut var: HashMap<String, Value> = HashMap::new();
+        for (key, val) in vars {
+            var.insert(
+                key,
+                val.try_into()
+                    .context("Failed to convert to Surreal Value")?,
+            );
+        }
         let mut res = self
             .surreal
             .query(query)
-            .bind(vars)
+            .bind(var)
             .await
             .with_context(|| "Surreal::query_single")?;
         let mut vec = Vec::with_capacity(res.num_statements());
         for i in 0..res.num_statements() {
             vec.push(
-                res.take(i)
-                    .with_context(|| "Failed taking the result of the Query")?,
+                res.take::<Value>(i)
+                    .with_context(|| "Failed taking the result of the Query")?
+                    .try_into()
+                    .context("Failed to convert Surreal Value")?,
             );
         }
         Ok(vec)
     }
 
-    pub async fn run(&self, function: String, args: Value) -> Result<Value> {
-        //TODO: Chaining
-        Ok(self
-            .surreal
-            .run(function)
-            .args(args)
-            .await
-            .with_context(|| "Surreal::run")?)
+    pub async fn run(&self, function: String, args: SurrealValue) -> Result<SurrealValue> {
+        let args: Value = args
+            .try_into()
+            .context("Failed to convert to Surreal Value")?;
+        let ret: Value = self.surreal.run(function).args(args).await?;
+        ret.try_into().context("Failed to convert Surreal Value")
     }
 
     pub async fn export(&self, path: String) -> Result<()> {

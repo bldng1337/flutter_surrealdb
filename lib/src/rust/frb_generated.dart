@@ -70,7 +70,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.10.0';
 
   @override
-  int get rustContentHash => -2036826091;
+  int get rustContentHash => -935837776;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -167,8 +167,6 @@ abstract class RustLibApi extends BaseApi {
   Stream<DBNotification> crateApiSimpleSurrealProxyWatch(
       {required SurrealProxy that, required String resource});
 
-  String crateApiSimpleGreet({required String name});
-
   Future<void> crateApiSimpleInitApp();
 
   RustArcIncrementStrongCountFnType
@@ -230,7 +228,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       },
       codec: SseCodec(
         decodeSuccessData:
-            sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue,
+            sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue,
         decodeErrorData: sse_decode_AnyhowException,
       ),
       constMeta: kCrateApiSimpleSurrealProxyCreateConstMeta,
@@ -340,14 +338,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
             that, serializer);
         sse_encode_String(res, serializer);
-        sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
+        sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
             data, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
             funcId: 6, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData:
-            sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue,
+            sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue,
         decodeErrorData: sse_decode_AnyhowException,
       ),
       constMeta: kCrateApiSimpleSurrealProxyInsertConstMeta,
@@ -452,14 +450,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
             that, serializer);
         sse_encode_String(query, serializer);
-        sse_encode_Map_String_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue_None(
+        sse_encode_Map_String_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue_None(
             vars, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
             funcId: 10, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData:
-            sse_decode_list_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue,
+            sse_decode_list_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue,
         decodeErrorData: sse_decode_AnyhowException,
       ),
       constMeta: kCrateApiSimpleSurrealProxyQueryConstMeta,
@@ -485,14 +483,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
             that, serializer);
         sse_encode_String(function, serializer);
-        sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
+        sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
             args, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
             funcId: 11, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData:
-            sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue,
+            sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue,
         decodeErrorData: sse_decode_AnyhowException,
       ),
       constMeta: kCrateApiSimpleSurrealProxyRunConstMeta,
@@ -521,7 +519,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       },
       codec: SseCodec(
         decodeSuccessData:
-            sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue,
+            sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue,
         decodeErrorData: sse_decode_AnyhowException,
       ),
       constMeta: kCrateApiSimpleSurrealProxySelectConstMeta,
@@ -547,7 +545,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
             that, serializer);
         sse_encode_String(key, serializer);
-        sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
+        sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
             value, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
             funcId: 13, port: port_);
@@ -583,7 +581,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_String(namespace, serializer);
         sse_encode_String(database, serializer);
         sse_encode_String(access, serializer);
-        sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
+        sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
             extra, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
             funcId: 14, port: port_);
@@ -619,7 +617,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_String(namespace, serializer);
         sse_encode_String(database, serializer);
         sse_encode_String(access, serializer);
-        sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
+        sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
             extra, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
             funcId: 15, port: port_);
@@ -679,14 +677,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
             that, serializer);
         sse_encode_String(resource, serializer);
-        sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
+        sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
             data, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
             funcId: 17, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData:
-            sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue,
+            sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue,
         decodeErrorData: sse_decode_AnyhowException,
       ),
       constMeta: kCrateApiSimpleSurrealProxyUpdateContentConstMeta,
@@ -712,14 +710,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
             that, serializer);
         sse_encode_String(resource, serializer);
-        sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
+        sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
             data, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
             funcId: 18, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData:
-            sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue,
+            sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue,
         decodeErrorData: sse_decode_AnyhowException,
       ),
       constMeta: kCrateApiSimpleSurrealProxyUpdateMergeConstMeta,
@@ -745,14 +743,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
             that, serializer);
         sse_encode_String(res, serializer);
-        sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
+        sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
             data, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
             funcId: 19, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData:
-            sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue,
+            sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue,
         decodeErrorData: sse_decode_AnyhowException,
       ),
       constMeta: kCrateApiSimpleSurrealProxyUpsertConstMeta,
@@ -882,35 +880,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  String crateApiSimpleGreet({required String name}) {
-    return handler.executeSync(SyncTask(
-      callFfi: () {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_String(name, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 24)!;
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_String,
-        decodeErrorData: null,
-      ),
-      constMeta: kCrateApiSimpleGreetConstMeta,
-      argValues: [name],
-      apiImpl: this,
-    ));
-  }
-
-  TaskConstMeta get kCrateApiSimpleGreetConstMeta => const TaskConstMeta(
-        debugName: "greet",
-        argNames: ["name"],
-      );
-
-  @override
   Future<void> crateApiSimpleInitApp() {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 25, port: port_);
+            funcId: 24, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -959,7 +934,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   dynamic
-      dco_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
+      dco_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
           dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     throw UnimplementedError(
@@ -968,11 +943,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   Map<String, dynamic>
-      dco_decode_Map_String_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue_None(
+      dco_decode_Map_String_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue_None(
           dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return Map.fromEntries(
-        dco_decode_list_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_value(
+        dco_decode_list_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_surreal_value(
                 raw)
             .map((e) => MapEntry(e.$1, e.$2)));
   }
@@ -1013,7 +988,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     return DBNotification(
       action: dco_decode_action(arr[0]),
       value:
-          dco_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
+          dco_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
               arr[1]),
       uuid: dco_decode_String(arr[2]),
     );
@@ -1027,12 +1002,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   List<dynamic>
-      dco_decode_list_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
+      dco_decode_list_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
           dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>)
         .map(
-            dco_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue)
+            dco_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue)
         .toList();
   }
 
@@ -1044,12 +1019,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   List<(String, dynamic)>
-      dco_decode_list_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_value(
+      dco_decode_list_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_surreal_value(
           dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>)
         .map(
-            dco_decode_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_value)
+            dco_decode_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_surreal_value)
         .toList();
   }
 
@@ -1057,7 +1032,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   (
     String,
     dynamic
-  ) dco_decode_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_value(
+  ) dco_decode_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_surreal_value(
       dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -1066,7 +1041,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     }
     return (
       dco_decode_String(arr[0]),
-      dco_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
+      dco_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
           arr[1]),
     );
   }
@@ -1116,7 +1091,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   dynamic
-      sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
+      sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
           SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_String(deserializer);
@@ -1125,11 +1100,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   Map<String, dynamic>
-      sse_decode_Map_String_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue_None(
+      sse_decode_Map_String_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue_None(
           SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner =
-        sse_decode_list_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_value(
+        sse_decode_list_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_surreal_value(
             deserializer);
     return Map.fromEntries(inner.map((e) => MapEntry(e.$1, e.$2)));
   }
@@ -1169,7 +1144,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_action = sse_decode_action(deserializer);
     var var_value =
-        sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
+        sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
             deserializer);
     var var_uuid = sse_decode_String(deserializer);
     return DBNotification(action: var_action, value: var_value, uuid: var_uuid);
@@ -1183,7 +1158,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   List<dynamic>
-      sse_decode_list_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
+      sse_decode_list_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
           SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -1191,7 +1166,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var ans_ = <dynamic>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(
-          sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
+          sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
               deserializer));
     }
     return ans_;
@@ -1206,7 +1181,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   List<(String, dynamic)>
-      sse_decode_list_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_value(
+      sse_decode_list_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_surreal_value(
           SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -1214,7 +1189,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var ans_ = <(String, dynamic)>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(
-          sse_decode_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_value(
+          sse_decode_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_surreal_value(
               deserializer));
     }
     return ans_;
@@ -1224,12 +1199,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   (
     String,
     dynamic
-  ) sse_decode_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_value(
+  ) sse_decode_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_surreal_value(
       SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_field0 = sse_decode_String(deserializer);
     var var_field1 =
-        sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
+        sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
             deserializer);
     return (var_field0, var_field1);
   }
@@ -1286,7 +1261,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void
-      sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
+      sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
           dynamic self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(surrdecodeType(self), serializer);
@@ -1294,10 +1269,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void
-      sse_encode_Map_String_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue_None(
+      sse_encode_Map_String_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue_None(
           Map<String, dynamic> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_list_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_value(
+    sse_encode_list_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_surreal_value(
         self.entries.map((e) => (e.key, e.value)).toList(), serializer);
   }
 
@@ -1341,7 +1316,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       DBNotification self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_action(self.action, serializer);
-    sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
+    sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
         self.value, serializer);
     sse_encode_String(self.uuid, serializer);
   }
@@ -1354,12 +1329,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void
-      sse_encode_list_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
+      sse_encode_list_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
           List<dynamic> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
-      sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
+      sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
           item, serializer);
     }
   }
@@ -1374,23 +1349,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void
-      sse_encode_list_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_value(
+      sse_encode_list_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_surreal_value(
           List<(String, dynamic)> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
-      sse_encode_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_value(
+      sse_encode_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_surreal_value(
           item, serializer);
     }
   }
 
   @protected
   void
-      sse_encode_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_value(
+      sse_encode_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_surreal_value(
           (String, dynamic) self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.$1, serializer);
-    sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerValue(
+    sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
         self.$2, serializer);
   }
 

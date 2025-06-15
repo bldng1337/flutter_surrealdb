@@ -157,7 +157,7 @@ class SurrealDBImpl implements SurrealDB {
         namespace: namespace,
         database: database,
         access: access,
-        extra: extra.toString());
+        extra: extra);
   }
 
   @override

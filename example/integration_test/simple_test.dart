@@ -5,9 +5,6 @@ import 'package:flutter_surrealdb/flutter_surrealdb.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(() async => await RustLib.init());
-  test('Can call rust function', () async {
-    expect(greet(name: "Tom"), "Hello, Tom!");
-  });
   test('Construct a Database', () async {
     final db = await SurrealProxy.newMem();
     expect(db, isA<SurrealProxy>());
@@ -228,7 +225,7 @@ void main() {
     expect(insert["id"], isA<DBRecord>());
     final DBRecord record = insert["id"];
     data["id"] = record;
-    final obj = {
+    final Map<String, dynamic> obj = {
       "sid": const DBRecord("test", "test"),
       "num": 2,
       "num2": 2.3,
@@ -237,11 +234,13 @@ void main() {
       "string": "test",
       "array": ["test1", "test2"],
       "object": {"test": "test"},
-      // "datetime": DateTime.now(),
+      "datetime": DateTime.now(),
       "datetimeutc": DateTime.now().toUtc(),
       // "uuid": "12345678-1234-1234-1234-123456789012" TODO: Fix UUID
     };
     final result = await db.query(query: "RETURN \$obj;", vars: {"obj": obj});
+    // Surreal converts datetime to UTC
+    obj["datetime"] = obj["datetime"]!.toUtc();
     expect(result, [obj]);
   });
 }
