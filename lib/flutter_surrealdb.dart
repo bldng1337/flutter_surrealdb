@@ -9,7 +9,6 @@ export 'src/rust/frb_generated.dart' show RustLib;
 export 'src/rust/api/simple.dart' show DBNotification;
 
 abstract class SurrealDB {
-  Future<T> lock<T>(Future<T> Function(SurrealDB db) callback);
   Future<void> export({required String path});
   Future<void> import({required String path});
   Future<dynamic> create({required Resource res});
@@ -57,36 +56,8 @@ abstract class SurrealDB {
 
 class SurrealDBImpl implements SurrealDB {
   final rust.SurrealProxy _surreal;
-  Completer? _lockcompleter;
 
   SurrealDBImpl(this._surreal);
-
-  Future<void> _awaitLock() async {
-    while (_isLocked) {
-      await _lockcompleter!.future;
-    }
-  }
-
-  void _unlock() {
-    _lockcompleter?.complete();
-  }
-
-  get _isLocked => !(_lockcompleter?.isCompleted ?? true);
-
-  SurrealDBImpl _copyUnlocked() {
-    return SurrealDBImpl(_surreal);
-  }
-
-  @override
-  Future<T> lock<T>(Future<T> Function(SurrealDB db) callback) async {
-    if (_isLocked) await _awaitLock();
-    _lockcompleter = Completer();
-    try {
-      return await callback(_copyUnlocked());
-    } finally {
-      _unlock();
-    }
-  }
 
   @override
   Future<void> export({required String path}) async {
@@ -100,160 +71,80 @@ class SurrealDBImpl implements SurrealDB {
 
   @override
   Future<dynamic> create({required Resource res}) async {
-    if (_isLocked) await _awaitLock();
-    _lockcompleter = Completer();
-    try {
-      return await _surreal.create(res: res.resource);
-    } finally {
-      _unlock();
-    }
+    return await _surreal.create(res: res.resource);
   }
 
   @override
   Future<void> delete({required Resource res}) async {
-    if (_isLocked) await _awaitLock();
-    _lockcompleter = Completer();
-    try {
-      await _surreal.delete(resource: res.resource);
-    } finally {
-      _unlock();
-    }
+    await _surreal.delete(resource: res.resource);
   }
 
   @override
   Future<dynamic> select({required Resource res}) async {
-    if (_isLocked) await _awaitLock();
-    _lockcompleter = Completer();
-    try {
-      return await _surreal.select(resource: res.resource);
-    } finally {
-      _unlock();
-    }
+    return await _surreal.select(resource: res.resource);
   }
 
   @override
   Stream<rust.DBNotification> watch({required Resource res}) {
-    if (_isLocked) return _watchLocked(res: res);
     return _surreal.watch(resource: res.resource);
   }
 
   Stream<rust.DBNotification> _watchLocked({required Resource res}) async* {
-    await _awaitLock();
     yield* _surreal.watch(resource: res.resource);
   }
 
   @override
   Future<dynamic> updateContent(
       {required Resource res, required dynamic data}) async {
-    if (_isLocked) await _awaitLock();
-    _lockcompleter = Completer();
-    try {
-      return await _surreal.updateContent(resource: res.resource, data: data);
-    } finally {
-      _unlock();
-    }
+    return await _surreal.updateContent(resource: res.resource, data: data);
   }
 
   @override
   Future<dynamic> updateMerge(
       {required Resource res, required dynamic data}) async {
-    if (_isLocked) await _awaitLock();
-    _lockcompleter = Completer();
-    try {
-      return await _surreal.updateMerge(resource: res.resource, data: data);
-    } finally {
-      _unlock();
-    }
+    return await _surreal.updateMerge(resource: res.resource, data: data);
   }
 
   @override
   Future<dynamic> insert({required Resource res, required dynamic data}) async {
-    if (_isLocked) await _awaitLock();
-    _lockcompleter = Completer();
-    try {
-      return await _surreal.insert(res: res.resource, data: data);
-    } finally {
-      _unlock();
-    }
+    return await _surreal.insert(res: res.resource, data: data);
   }
 
   @override
   Future<dynamic> upsert({required Resource res, required dynamic data}) async {
-    if (_isLocked) await _awaitLock();
-    _lockcompleter = Completer();
-    try {
-      return await _surreal.upsert(res: res.resource, data: data);
-    } finally {
-      _unlock();
-    }
+    return await _surreal.upsert(res: res.resource, data: data);
   }
 
   @override
   Future<List<dynamic>> query(
       {required String query, Map<String, dynamic>? vars}) async {
-    if (_isLocked) await _awaitLock();
-    _lockcompleter = Completer();
-    try {
-      return await _surreal.query(query: query, vars: vars ?? {});
-    } finally {
-      _unlock();
-    }
+    return await _surreal.query(query: query, vars: vars ?? {});
   }
 
   @override
   Future<dynamic> run({required String function, required dynamic args}) async {
-    if (_isLocked) await _awaitLock();
-    _lockcompleter = Completer();
-    try {
-      return await _surreal.run(function: function, args: args);
-    } finally {
-      _unlock();
-    }
+    return await _surreal.run(function: function, args: args);
   }
 
   @override
   Future<void> set({required String key, required dynamic value}) async {
-    if (_isLocked) await _awaitLock();
-    _lockcompleter = Completer();
-    try {
-      await _surreal.set_(key: key, value: value);
-    } finally {
-      _unlock();
-    }
+    await _surreal.set_(key: key, value: value);
   }
 
   @override
   Future<void> unset({required String key}) async {
-    if (_isLocked) await _awaitLock();
-    _lockcompleter = Completer();
-    try {
-      await _surreal.unset(key: key);
-    } finally {
-      _unlock();
-    }
+    await _surreal.unset(key: key);
   }
 
   // AUTH
 
   Future<void> invalidate() async {
-    if (_isLocked) await _awaitLock();
-    _lockcompleter = Completer();
-    try {
-      await _surreal.invalidate();
-    } finally {
-      _unlock();
-    }
+    await _surreal.invalidate();
   }
 
   @override
   Future<void> authenticate({required String token}) async {
-    if (_isLocked) await _awaitLock();
-    _lockcompleter = Completer();
-    try {
-      await _surreal.authenticate(token: token);
-    } finally {
-      _unlock();
-    }
+    await _surreal.authenticate(token: token);
   }
 
   @override
@@ -262,17 +153,11 @@ class SurrealDBImpl implements SurrealDB {
       required String database,
       required String access,
       required dynamic extra}) async {
-    if (_isLocked) await _awaitLock();
-    _lockcompleter = Completer();
-    try {
-      return await _surreal.signin(
-          namespace: namespace,
-          database: database,
-          access: access,
-          extra: extra.toString());
-    } finally {
-      _unlock();
-    }
+    return await _surreal.signin(
+        namespace: namespace,
+        database: database,
+        access: access,
+        extra: extra.toString());
   }
 
   @override
@@ -281,55 +166,31 @@ class SurrealDBImpl implements SurrealDB {
       required String database,
       required String access,
       required dynamic extra}) async {
-    if (_isLocked) await _awaitLock();
-    _lockcompleter = Completer();
-    try {
-      return await _surreal.signup(
-          namespace: namespace,
-          database: database,
-          access: access,
-          extra: extra.toString());
-    } finally {
-      _unlock();
-    }
+    return await _surreal.signup(
+        namespace: namespace,
+        database: database,
+        access: access,
+        extra: extra.toString());
   }
 
   // SCOPING
   @override
   Future<void> useDb({required String db}) async {
-    if (_isLocked) await _awaitLock();
-    _lockcompleter = Completer();
-    try {
-      await _surreal.useDb(db: db);
-    } finally {
-      _unlock();
-    }
+    await _surreal.useDb(db: db);
   }
 
   @override
   Future<void> useNs({required String namespace}) async {
-    if (_isLocked) await _awaitLock();
-    _lockcompleter = Completer();
-    try {
-      await _surreal.useNs(namespace: namespace);
-    } finally {
-      _unlock();
-    }
+    await _surreal.useNs(namespace: namespace);
   }
 
   @override
   Future<void> use({String? db, String? namespace}) async {
-    if (_isLocked) await _awaitLock();
-    _lockcompleter = Completer();
-    try {
-      if (db != null) {
-        await _surreal.useDb(db: db);
-      }
-      if (namespace != null) {
-        await _surreal.useNs(namespace: namespace);
-      }
-    } finally {
-      _unlock();
+    if (db != null) {
+      await _surreal.useDb(db: db);
+    }
+    if (namespace != null) {
+      await _surreal.useNs(namespace: namespace);
     }
   }
 
@@ -349,6 +210,7 @@ class SurrealDBImpl implements SurrealDB {
     return _surreal.isDisposed;
   }
 
+  @override
   rust.SurrealProxy get rustbinding => _surreal;
 }
 
