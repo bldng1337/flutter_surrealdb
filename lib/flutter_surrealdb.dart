@@ -4,9 +4,9 @@ import 'dart:async';
 
 import 'package:flutter_surrealdb/src/rust/api/simple.dart' as rust;
 
+export 'src/rust/api/simple.dart' show DBNotification;
 export 'src/rust/api/simple.dart';
 export 'src/rust/frb_generated.dart' show RustLib;
-export 'src/rust/api/simple.dart' show DBNotification;
 
 abstract class SurrealDB {
   Future<void> export({required String path});
@@ -87,10 +87,6 @@ class SurrealDBImpl implements SurrealDB {
   @override
   Stream<rust.DBNotification> watch({required Resource res}) {
     return _surreal.watch(resource: res.resource);
-  }
-
-  Stream<rust.DBNotification> _watchLocked({required Resource res}) async* {
-    yield* _surreal.watch(resource: res.resource);
   }
 
   @override
