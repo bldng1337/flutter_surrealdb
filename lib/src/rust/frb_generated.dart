@@ -5,7 +5,8 @@ import 'package:flutter_surrealdb/utils.dart';
 
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
-import 'api/simple.dart';
+import 'api/engine.dart';
+import 'api/options.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'frb_generated.dart';
@@ -60,9 +61,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
       RustLibWire.fromExternalLibrary;
 
   @override
-  Future<void> executeRustInitializers() async {
-    await api.crateApiSimpleInitApp();
-  }
+  Future<void> executeRustInitializers() async {}
 
   @override
   ExternalLibraryLoaderConfig get defaultExternalLibraryLoaderConfig =>
@@ -72,7 +71,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.11.1';
 
   @override
-  int get rustContentHash => -935837776;
+  int get rustContentHash => 1929108195;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -83,101 +82,31 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
-  Future<void> crateApiSimpleSurrealProxyAuthenticate(
-      {required SurrealProxy that, required String token});
+  Future<SurrealFlutterEngine> crateApiEngineSurrealFlutterEngineConnect(
+      {required String endpoint, Options? opts});
 
-  Future<dynamic> crateApiSimpleSurrealProxyCreate(
-      {required SurrealProxy that, required String res});
+  Future<Uint8List> crateApiEngineSurrealFlutterEngineExecute(
+      {required SurrealFlutterEngine that, required List<int> data});
 
-  Future<void> crateApiSimpleSurrealProxyDelete(
-      {required SurrealProxy that, required String resource});
+  Future<String> crateApiEngineSurrealFlutterEngineExport(
+      {required SurrealFlutterEngine that, Uint8List? config});
 
-  Future<void> crateApiSimpleSurrealProxyExport(
-      {required SurrealProxy that, required String path});
+  Future<void> crateApiEngineSurrealFlutterEngineImport(
+      {required SurrealFlutterEngine that, required String input});
 
-  Future<void> crateApiSimpleSurrealProxyImport(
-      {required SurrealProxy that, required String path});
+  Stream<DBNotification> crateApiEngineSurrealFlutterEngineNotifications(
+      {required SurrealFlutterEngine that});
 
-  Future<dynamic> crateApiSimpleSurrealProxyInsert(
-      {required SurrealProxy that, required String res, required dynamic data});
-
-  Future<void> crateApiSimpleSurrealProxyInvalidate(
-      {required SurrealProxy that});
-
-  Future<SurrealProxy> crateApiSimpleSurrealProxyNewMem();
-
-  Future<SurrealProxy> crateApiSimpleSurrealProxyNewRocksdb(
-      {required String path});
-
-  Future<List<dynamic>> crateApiSimpleSurrealProxyQuery(
-      {required SurrealProxy that,
-      required String query,
-      required Map<String, dynamic> vars});
-
-  Future<dynamic> crateApiSimpleSurrealProxyRun(
-      {required SurrealProxy that,
-      required String function,
-      required dynamic args});
-
-  Future<dynamic> crateApiSimpleSurrealProxySelect(
-      {required SurrealProxy that, required String resource});
-
-  Future<void> crateApiSimpleSurrealProxySet(
-      {required SurrealProxy that,
-      required String key,
-      required dynamic value});
-
-  Future<String> crateApiSimpleSurrealProxySignin(
-      {required SurrealProxy that,
-      required String namespace,
-      required String database,
-      required String access,
-      required dynamic extra});
-
-  Future<String> crateApiSimpleSurrealProxySignup(
-      {required SurrealProxy that,
-      required String namespace,
-      required String database,
-      required String access,
-      required dynamic extra});
-
-  Future<void> crateApiSimpleSurrealProxyUnset(
-      {required SurrealProxy that, required String key});
-
-  Future<dynamic> crateApiSimpleSurrealProxyUpdateContent(
-      {required SurrealProxy that,
-      required String resource,
-      required dynamic data});
-
-  Future<dynamic> crateApiSimpleSurrealProxyUpdateMerge(
-      {required SurrealProxy that,
-      required String resource,
-      required dynamic data});
-
-  Future<dynamic> crateApiSimpleSurrealProxyUpsert(
-      {required SurrealProxy that, required String res, required dynamic data});
-
-  Future<void> crateApiSimpleSurrealProxyUseDb(
-      {required SurrealProxy that, required String db});
-
-  Future<void> crateApiSimpleSurrealProxyUseNs(
-      {required SurrealProxy that, required String namespace});
-
-  Future<String> crateApiSimpleSurrealProxyVersion(
-      {required SurrealProxy that});
-
-  Stream<DBNotification> crateApiSimpleSurrealProxyWatch(
-      {required SurrealProxy that, required String resource});
-
-  Future<void> crateApiSimpleInitApp();
+  Future<String> crateApiEngineSurrealFlutterEngineVersion();
 
   RustArcIncrementStrongCountFnType
-      get rust_arc_increment_strong_count_SurrealProxy;
+      get rust_arc_increment_strong_count_SurrealFlutterEngine;
 
   RustArcDecrementStrongCountFnType
-      get rust_arc_decrement_strong_count_SurrealProxy;
+      get rust_arc_decrement_strong_count_SurrealFlutterEngine;
 
-  CrossPlatformFinalizerArg get rust_arc_decrement_strong_count_SurrealProxyPtr;
+  CrossPlatformFinalizerArg
+      get rust_arc_decrement_strong_count_SurrealFlutterEnginePtr;
 }
 
 class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
@@ -189,99 +118,98 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
-  Future<void> crateApiSimpleSurrealProxyAuthenticate(
-      {required SurrealProxy that, required String token}) {
+  Future<SurrealFlutterEngine> crateApiEngineSurrealFlutterEngineConnect(
+      {required String endpoint, Options? opts}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
-            that, serializer);
-        sse_encode_String(token, serializer);
+        sse_encode_String(endpoint, serializer);
+        sse_encode_opt_box_autoadd_options(opts, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
             funcId: 1, port: port_);
       },
       codec: SseCodec(
-        decodeSuccessData: sse_decode_unit,
+        decodeSuccessData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealFlutterEngine,
         decodeErrorData: sse_decode_AnyhowException,
       ),
-      constMeta: kCrateApiSimpleSurrealProxyAuthenticateConstMeta,
-      argValues: [that, token],
+      constMeta: kCrateApiEngineSurrealFlutterEngineConnectConstMeta,
+      argValues: [endpoint, opts],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiSimpleSurrealProxyAuthenticateConstMeta =>
+  TaskConstMeta get kCrateApiEngineSurrealFlutterEngineConnectConstMeta =>
       const TaskConstMeta(
-        debugName: "SurrealProxy_authenticate",
-        argNames: ["that", "token"],
+        debugName: "SurrealFlutterEngine_connect",
+        argNames: ["endpoint", "opts"],
       );
 
   @override
-  Future<dynamic> crateApiSimpleSurrealProxyCreate(
-      {required SurrealProxy that, required String res}) {
+  Future<Uint8List> crateApiEngineSurrealFlutterEngineExecute(
+      {required SurrealFlutterEngine that, required List<int> data}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
+        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealFlutterEngine(
             that, serializer);
-        sse_encode_String(res, serializer);
+        sse_encode_list_prim_u_8_loose(data, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
             funcId: 2, port: port_);
       },
       codec: SseCodec(
-        decodeSuccessData:
-            sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue,
+        decodeSuccessData: sse_decode_list_prim_u_8_strict,
         decodeErrorData: sse_decode_AnyhowException,
       ),
-      constMeta: kCrateApiSimpleSurrealProxyCreateConstMeta,
-      argValues: [that, res],
+      constMeta: kCrateApiEngineSurrealFlutterEngineExecuteConstMeta,
+      argValues: [that, data],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiSimpleSurrealProxyCreateConstMeta =>
+  TaskConstMeta get kCrateApiEngineSurrealFlutterEngineExecuteConstMeta =>
       const TaskConstMeta(
-        debugName: "SurrealProxy_create",
-        argNames: ["that", "res"],
+        debugName: "SurrealFlutterEngine_execute",
+        argNames: ["that", "data"],
       );
 
   @override
-  Future<void> crateApiSimpleSurrealProxyDelete(
-      {required SurrealProxy that, required String resource}) {
+  Future<String> crateApiEngineSurrealFlutterEngineExport(
+      {required SurrealFlutterEngine that, Uint8List? config}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
+        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealFlutterEngine(
             that, serializer);
-        sse_encode_String(resource, serializer);
+        sse_encode_opt_list_prim_u_8_strict(config, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
             funcId: 3, port: port_);
       },
       codec: SseCodec(
-        decodeSuccessData: sse_decode_unit,
+        decodeSuccessData: sse_decode_String,
         decodeErrorData: sse_decode_AnyhowException,
       ),
-      constMeta: kCrateApiSimpleSurrealProxyDeleteConstMeta,
-      argValues: [that, resource],
+      constMeta: kCrateApiEngineSurrealFlutterEngineExportConstMeta,
+      argValues: [that, config],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiSimpleSurrealProxyDeleteConstMeta =>
+  TaskConstMeta get kCrateApiEngineSurrealFlutterEngineExportConstMeta =>
       const TaskConstMeta(
-        debugName: "SurrealProxy_delete",
-        argNames: ["that", "resource"],
+        debugName: "SurrealFlutterEngine_export",
+        argNames: ["that", "config"],
       );
 
   @override
-  Future<void> crateApiSimpleSurrealProxyExport(
-      {required SurrealProxy that, required String path}) {
+  Future<void> crateApiEngineSurrealFlutterEngineImport(
+      {required SurrealFlutterEngine that, required String input}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
+        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealFlutterEngine(
             that, serializer);
-        sse_encode_String(path, serializer);
+        sse_encode_String(input, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
             funcId: 4, port: port_);
       },
@@ -289,27 +217,28 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         decodeSuccessData: sse_decode_unit,
         decodeErrorData: sse_decode_AnyhowException,
       ),
-      constMeta: kCrateApiSimpleSurrealProxyExportConstMeta,
-      argValues: [that, path],
+      constMeta: kCrateApiEngineSurrealFlutterEngineImportConstMeta,
+      argValues: [that, input],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiSimpleSurrealProxyExportConstMeta =>
+  TaskConstMeta get kCrateApiEngineSurrealFlutterEngineImportConstMeta =>
       const TaskConstMeta(
-        debugName: "SurrealProxy_export",
-        argNames: ["that", "path"],
+        debugName: "SurrealFlutterEngine_import",
+        argNames: ["that", "input"],
       );
 
   @override
-  Future<void> crateApiSimpleSurrealProxyImport(
-      {required SurrealProxy that, required String path}) {
-    return handler.executeNormal(NormalTask(
+  Stream<DBNotification> crateApiEngineSurrealFlutterEngineNotifications(
+      {required SurrealFlutterEngine that}) {
+    final sink = RustStreamSink<DBNotification>();
+    unawaited(handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
+        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealFlutterEngine(
             that, serializer);
-        sse_encode_String(path, serializer);
+        sse_encode_StreamSink_db_notification_Sse(sink, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
             funcId: 5, port: port_);
       },
@@ -317,600 +246,50 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         decodeSuccessData: sse_decode_unit,
         decodeErrorData: sse_decode_AnyhowException,
       ),
-      constMeta: kCrateApiSimpleSurrealProxyImportConstMeta,
-      argValues: [that, path],
-      apiImpl: this,
-    ));
-  }
-
-  TaskConstMeta get kCrateApiSimpleSurrealProxyImportConstMeta =>
-      const TaskConstMeta(
-        debugName: "SurrealProxy_import",
-        argNames: ["that", "path"],
-      );
-
-  @override
-  Future<dynamic> crateApiSimpleSurrealProxyInsert(
-      {required SurrealProxy that,
-      required String res,
-      required dynamic data}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
-            that, serializer);
-        sse_encode_String(res, serializer);
-        sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
-            data, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 6, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData:
-            sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue,
-        decodeErrorData: sse_decode_AnyhowException,
-      ),
-      constMeta: kCrateApiSimpleSurrealProxyInsertConstMeta,
-      argValues: [that, res, data],
-      apiImpl: this,
-    ));
-  }
-
-  TaskConstMeta get kCrateApiSimpleSurrealProxyInsertConstMeta =>
-      const TaskConstMeta(
-        debugName: "SurrealProxy_insert",
-        argNames: ["that", "res", "data"],
-      );
-
-  @override
-  Future<void> crateApiSimpleSurrealProxyInvalidate(
-      {required SurrealProxy that}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
-            that, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 7, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_unit,
-        decodeErrorData: sse_decode_AnyhowException,
-      ),
-      constMeta: kCrateApiSimpleSurrealProxyInvalidateConstMeta,
-      argValues: [that],
-      apiImpl: this,
-    ));
-  }
-
-  TaskConstMeta get kCrateApiSimpleSurrealProxyInvalidateConstMeta =>
-      const TaskConstMeta(
-        debugName: "SurrealProxy_invalidate",
-        argNames: ["that"],
-      );
-
-  @override
-  Future<SurrealProxy> crateApiSimpleSurrealProxyNewMem() {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 8, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData:
-            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy,
-        decodeErrorData: sse_decode_AnyhowException,
-      ),
-      constMeta: kCrateApiSimpleSurrealProxyNewMemConstMeta,
-      argValues: [],
-      apiImpl: this,
-    ));
-  }
-
-  TaskConstMeta get kCrateApiSimpleSurrealProxyNewMemConstMeta =>
-      const TaskConstMeta(
-        debugName: "SurrealProxy_new_mem",
-        argNames: [],
-      );
-
-  @override
-  Future<SurrealProxy> crateApiSimpleSurrealProxyNewRocksdb(
-      {required String path}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_String(path, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 9, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData:
-            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy,
-        decodeErrorData: sse_decode_AnyhowException,
-      ),
-      constMeta: kCrateApiSimpleSurrealProxyNewRocksdbConstMeta,
-      argValues: [path],
-      apiImpl: this,
-    ));
-  }
-
-  TaskConstMeta get kCrateApiSimpleSurrealProxyNewRocksdbConstMeta =>
-      const TaskConstMeta(
-        debugName: "SurrealProxy_new_rocksdb",
-        argNames: ["path"],
-      );
-
-  @override
-  Future<List<dynamic>> crateApiSimpleSurrealProxyQuery(
-      {required SurrealProxy that,
-      required String query,
-      required Map<String, dynamic> vars}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
-            that, serializer);
-        sse_encode_String(query, serializer);
-        sse_encode_Map_String_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue_None(
-            vars, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 10, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData:
-            sse_decode_list_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue,
-        decodeErrorData: sse_decode_AnyhowException,
-      ),
-      constMeta: kCrateApiSimpleSurrealProxyQueryConstMeta,
-      argValues: [that, query, vars],
-      apiImpl: this,
-    ));
-  }
-
-  TaskConstMeta get kCrateApiSimpleSurrealProxyQueryConstMeta =>
-      const TaskConstMeta(
-        debugName: "SurrealProxy_query",
-        argNames: ["that", "query", "vars"],
-      );
-
-  @override
-  Future<dynamic> crateApiSimpleSurrealProxyRun(
-      {required SurrealProxy that,
-      required String function,
-      required dynamic args}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
-            that, serializer);
-        sse_encode_String(function, serializer);
-        sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
-            args, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 11, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData:
-            sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue,
-        decodeErrorData: sse_decode_AnyhowException,
-      ),
-      constMeta: kCrateApiSimpleSurrealProxyRunConstMeta,
-      argValues: [that, function, args],
-      apiImpl: this,
-    ));
-  }
-
-  TaskConstMeta get kCrateApiSimpleSurrealProxyRunConstMeta =>
-      const TaskConstMeta(
-        debugName: "SurrealProxy_run",
-        argNames: ["that", "function", "args"],
-      );
-
-  @override
-  Future<dynamic> crateApiSimpleSurrealProxySelect(
-      {required SurrealProxy that, required String resource}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
-            that, serializer);
-        sse_encode_String(resource, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 12, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData:
-            sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue,
-        decodeErrorData: sse_decode_AnyhowException,
-      ),
-      constMeta: kCrateApiSimpleSurrealProxySelectConstMeta,
-      argValues: [that, resource],
-      apiImpl: this,
-    ));
-  }
-
-  TaskConstMeta get kCrateApiSimpleSurrealProxySelectConstMeta =>
-      const TaskConstMeta(
-        debugName: "SurrealProxy_select",
-        argNames: ["that", "resource"],
-      );
-
-  @override
-  Future<void> crateApiSimpleSurrealProxySet(
-      {required SurrealProxy that,
-      required String key,
-      required dynamic value}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
-            that, serializer);
-        sse_encode_String(key, serializer);
-        sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
-            value, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 13, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_unit,
-        decodeErrorData: sse_decode_AnyhowException,
-      ),
-      constMeta: kCrateApiSimpleSurrealProxySetConstMeta,
-      argValues: [that, key, value],
-      apiImpl: this,
-    ));
-  }
-
-  TaskConstMeta get kCrateApiSimpleSurrealProxySetConstMeta =>
-      const TaskConstMeta(
-        debugName: "SurrealProxy_set",
-        argNames: ["that", "key", "value"],
-      );
-
-  @override
-  Future<String> crateApiSimpleSurrealProxySignin(
-      {required SurrealProxy that,
-      required String namespace,
-      required String database,
-      required String access,
-      required dynamic extra}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
-            that, serializer);
-        sse_encode_String(namespace, serializer);
-        sse_encode_String(database, serializer);
-        sse_encode_String(access, serializer);
-        sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
-            extra, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 14, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_String,
-        decodeErrorData: sse_decode_AnyhowException,
-      ),
-      constMeta: kCrateApiSimpleSurrealProxySigninConstMeta,
-      argValues: [that, namespace, database, access, extra],
-      apiImpl: this,
-    ));
-  }
-
-  TaskConstMeta get kCrateApiSimpleSurrealProxySigninConstMeta =>
-      const TaskConstMeta(
-        debugName: "SurrealProxy_signin",
-        argNames: ["that", "namespace", "database", "access", "extra"],
-      );
-
-  @override
-  Future<String> crateApiSimpleSurrealProxySignup(
-      {required SurrealProxy that,
-      required String namespace,
-      required String database,
-      required String access,
-      required dynamic extra}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
-            that, serializer);
-        sse_encode_String(namespace, serializer);
-        sse_encode_String(database, serializer);
-        sse_encode_String(access, serializer);
-        sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
-            extra, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 15, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_String,
-        decodeErrorData: sse_decode_AnyhowException,
-      ),
-      constMeta: kCrateApiSimpleSurrealProxySignupConstMeta,
-      argValues: [that, namespace, database, access, extra],
-      apiImpl: this,
-    ));
-  }
-
-  TaskConstMeta get kCrateApiSimpleSurrealProxySignupConstMeta =>
-      const TaskConstMeta(
-        debugName: "SurrealProxy_signup",
-        argNames: ["that", "namespace", "database", "access", "extra"],
-      );
-
-  @override
-  Future<void> crateApiSimpleSurrealProxyUnset(
-      {required SurrealProxy that, required String key}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
-            that, serializer);
-        sse_encode_String(key, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 16, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_unit,
-        decodeErrorData: sse_decode_AnyhowException,
-      ),
-      constMeta: kCrateApiSimpleSurrealProxyUnsetConstMeta,
-      argValues: [that, key],
-      apiImpl: this,
-    ));
-  }
-
-  TaskConstMeta get kCrateApiSimpleSurrealProxyUnsetConstMeta =>
-      const TaskConstMeta(
-        debugName: "SurrealProxy_unset",
-        argNames: ["that", "key"],
-      );
-
-  @override
-  Future<dynamic> crateApiSimpleSurrealProxyUpdateContent(
-      {required SurrealProxy that,
-      required String resource,
-      required dynamic data}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
-            that, serializer);
-        sse_encode_String(resource, serializer);
-        sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
-            data, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 17, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData:
-            sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue,
-        decodeErrorData: sse_decode_AnyhowException,
-      ),
-      constMeta: kCrateApiSimpleSurrealProxyUpdateContentConstMeta,
-      argValues: [that, resource, data],
-      apiImpl: this,
-    ));
-  }
-
-  TaskConstMeta get kCrateApiSimpleSurrealProxyUpdateContentConstMeta =>
-      const TaskConstMeta(
-        debugName: "SurrealProxy_update_content",
-        argNames: ["that", "resource", "data"],
-      );
-
-  @override
-  Future<dynamic> crateApiSimpleSurrealProxyUpdateMerge(
-      {required SurrealProxy that,
-      required String resource,
-      required dynamic data}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
-            that, serializer);
-        sse_encode_String(resource, serializer);
-        sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
-            data, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 18, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData:
-            sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue,
-        decodeErrorData: sse_decode_AnyhowException,
-      ),
-      constMeta: kCrateApiSimpleSurrealProxyUpdateMergeConstMeta,
-      argValues: [that, resource, data],
-      apiImpl: this,
-    ));
-  }
-
-  TaskConstMeta get kCrateApiSimpleSurrealProxyUpdateMergeConstMeta =>
-      const TaskConstMeta(
-        debugName: "SurrealProxy_update_merge",
-        argNames: ["that", "resource", "data"],
-      );
-
-  @override
-  Future<dynamic> crateApiSimpleSurrealProxyUpsert(
-      {required SurrealProxy that,
-      required String res,
-      required dynamic data}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
-            that, serializer);
-        sse_encode_String(res, serializer);
-        sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
-            data, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 19, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData:
-            sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue,
-        decodeErrorData: sse_decode_AnyhowException,
-      ),
-      constMeta: kCrateApiSimpleSurrealProxyUpsertConstMeta,
-      argValues: [that, res, data],
-      apiImpl: this,
-    ));
-  }
-
-  TaskConstMeta get kCrateApiSimpleSurrealProxyUpsertConstMeta =>
-      const TaskConstMeta(
-        debugName: "SurrealProxy_upsert",
-        argNames: ["that", "res", "data"],
-      );
-
-  @override
-  Future<void> crateApiSimpleSurrealProxyUseDb(
-      {required SurrealProxy that, required String db}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
-            that, serializer);
-        sse_encode_String(db, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 20, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_unit,
-        decodeErrorData: sse_decode_AnyhowException,
-      ),
-      constMeta: kCrateApiSimpleSurrealProxyUseDbConstMeta,
-      argValues: [that, db],
-      apiImpl: this,
-    ));
-  }
-
-  TaskConstMeta get kCrateApiSimpleSurrealProxyUseDbConstMeta =>
-      const TaskConstMeta(
-        debugName: "SurrealProxy_use_db",
-        argNames: ["that", "db"],
-      );
-
-  @override
-  Future<void> crateApiSimpleSurrealProxyUseNs(
-      {required SurrealProxy that, required String namespace}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
-            that, serializer);
-        sse_encode_String(namespace, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 21, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_unit,
-        decodeErrorData: sse_decode_AnyhowException,
-      ),
-      constMeta: kCrateApiSimpleSurrealProxyUseNsConstMeta,
-      argValues: [that, namespace],
-      apiImpl: this,
-    ));
-  }
-
-  TaskConstMeta get kCrateApiSimpleSurrealProxyUseNsConstMeta =>
-      const TaskConstMeta(
-        debugName: "SurrealProxy_use_ns",
-        argNames: ["that", "namespace"],
-      );
-
-  @override
-  Future<String> crateApiSimpleSurrealProxyVersion(
-      {required SurrealProxy that}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
-            that, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 22, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_String,
-        decodeErrorData: sse_decode_AnyhowException,
-      ),
-      constMeta: kCrateApiSimpleSurrealProxyVersionConstMeta,
-      argValues: [that],
-      apiImpl: this,
-    ));
-  }
-
-  TaskConstMeta get kCrateApiSimpleSurrealProxyVersionConstMeta =>
-      const TaskConstMeta(
-        debugName: "SurrealProxy_version",
-        argNames: ["that"],
-      );
-
-  @override
-  Stream<DBNotification> crateApiSimpleSurrealProxyWatch(
-      {required SurrealProxy that, required String resource}) {
-    final sink = RustStreamSink<DBNotification>();
-    unawaited(handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        final serializer = SseSerializer(generalizedFrbRustBinding);
-        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
-            that, serializer);
-        sse_encode_String(resource, serializer);
-        sse_encode_StreamSink_db_notification_Sse(sink, serializer);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 23, port: port_);
-      },
-      codec: SseCodec(
-        decodeSuccessData: sse_decode_unit,
-        decodeErrorData: sse_decode_AnyhowException,
-      ),
-      constMeta: kCrateApiSimpleSurrealProxyWatchConstMeta,
-      argValues: [that, resource, sink],
+      constMeta: kCrateApiEngineSurrealFlutterEngineNotificationsConstMeta,
+      argValues: [that, sink],
       apiImpl: this,
     )));
     return sink.stream;
   }
 
-  TaskConstMeta get kCrateApiSimpleSurrealProxyWatchConstMeta =>
+  TaskConstMeta get kCrateApiEngineSurrealFlutterEngineNotificationsConstMeta =>
       const TaskConstMeta(
-        debugName: "SurrealProxy_watch",
-        argNames: ["that", "resource", "sink"],
+        debugName: "SurrealFlutterEngine_notifications",
+        argNames: ["that", "sink"],
       );
 
   @override
-  Future<void> crateApiSimpleInitApp() {
+  Future<String> crateApiEngineSurrealFlutterEngineVersion() {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 24, port: port_);
+            funcId: 6, port: port_);
       },
       codec: SseCodec(
-        decodeSuccessData: sse_decode_unit,
-        decodeErrorData: null,
+        decodeSuccessData: sse_decode_String,
+        decodeErrorData: sse_decode_AnyhowException,
       ),
-      constMeta: kCrateApiSimpleInitAppConstMeta,
+      constMeta: kCrateApiEngineSurrealFlutterEngineVersionConstMeta,
       argValues: [],
       apiImpl: this,
     ));
   }
 
-  TaskConstMeta get kCrateApiSimpleInitAppConstMeta => const TaskConstMeta(
-        debugName: "init_app",
+  TaskConstMeta get kCrateApiEngineSurrealFlutterEngineVersionConstMeta =>
+      const TaskConstMeta(
+        debugName: "SurrealFlutterEngine_version",
         argNames: [],
       );
 
   RustArcIncrementStrongCountFnType
-      get rust_arc_increment_strong_count_SurrealProxy => wire
-          .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy;
+      get rust_arc_increment_strong_count_SurrealFlutterEngine => wire
+          .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealFlutterEngine;
 
   RustArcDecrementStrongCountFnType
-      get rust_arc_decrement_strong_count_SurrealProxy => wire
-          .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy;
+      get rust_arc_decrement_strong_count_SurrealFlutterEngine => wire
+          .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealFlutterEngine;
 
   @protected
   AnyhowException dco_decode_AnyhowException(dynamic raw) {
@@ -919,47 +298,33 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  SurrealProxy
-      dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
+  SurrealFlutterEngine
+      dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealFlutterEngine(
           dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
-    return SurrealProxyImpl.frbInternalDcoDecode(raw as List<dynamic>);
+    return SurrealFlutterEngineImpl.frbInternalDcoDecode(raw as List<dynamic>);
   }
 
   @protected
-  SurrealProxy
-      dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
+  SurrealFlutterEngine
+      dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealFlutterEngine(
           dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
-    return SurrealProxyImpl.frbInternalDcoDecode(raw as List<dynamic>);
+    return SurrealFlutterEngineImpl.frbInternalDcoDecode(raw as List<dynamic>);
   }
 
   @protected
-  dynamic
-      dco_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
+  SurrealFlutterEngine
+      dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealFlutterEngine(
           dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
-    throw UnimplementedError(
-        'Not implemented in this codec, please use the other one');
+    return SurrealFlutterEngineImpl.frbInternalDcoDecode(raw as List<dynamic>);
   }
 
   @protected
-  Map<String, dynamic>
-      dco_decode_Map_String_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue_None(
-          dynamic raw) {
+  Set<String> dco_decode_Set_String_None(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
-    return Map.fromEntries(
-        dco_decode_list_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_surreal_value(
-                raw)
-            .map((e) => MapEntry(e.$1, e.$2)));
-  }
-
-  @protected
-  SurrealProxy
-      dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
-          dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return SurrealProxyImpl.frbInternalDcoDecode(raw as List<dynamic>);
+    return Set.from(dco_decode_list_String(raw));
   }
 
   @protected
@@ -982,17 +347,79 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  bool dco_decode_bool(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as bool;
+  }
+
+  @protected
+  bool dco_decode_box_autoadd_bool(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as bool;
+  }
+
+  @protected
+  CapabilitiesConfig dco_decode_box_autoadd_capabilities_config(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_capabilities_config(raw);
+  }
+
+  @protected
+  Options dco_decode_box_autoadd_options(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_options(raw);
+  }
+
+  @protected
+  Targets dco_decode_box_autoadd_targets(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_targets(raw);
+  }
+
+  @protected
+  TargetsConfig dco_decode_box_autoadd_targets_config(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_targets_config(raw);
+  }
+
+  @protected
+  int dco_decode_box_autoadd_u_8(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as int;
+  }
+
+  @protected
+  CapabilitiesConfig dco_decode_capabilities_config(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    switch (raw[0]) {
+      case 0:
+        return CapabilitiesConfig_Bool(
+          dco_decode_bool(raw[1]),
+        );
+      case 1:
+        return CapabilitiesConfig_Capabilities(
+          scripting: dco_decode_opt_box_autoadd_bool(raw[1]),
+          guestAccess: dco_decode_opt_box_autoadd_bool(raw[2]),
+          liveQueryNotifications: dco_decode_opt_box_autoadd_bool(raw[3]),
+          functions: dco_decode_opt_box_autoadd_targets(raw[4]),
+          networkTargets: dco_decode_opt_box_autoadd_targets(raw[5]),
+        );
+      default:
+        throw Exception("unreachable");
+    }
+  }
+
+  @protected
   DBNotification dco_decode_db_notification(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 3)
-      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
     return DBNotification(
-      action: dco_decode_action(arr[0]),
-      value:
-          dco_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
-              arr[1]),
-      uuid: dco_decode_String(arr[2]),
+      id: dco_decode_list_prim_u_8_strict(arr[0]),
+      action: dco_decode_action(arr[1]),
+      record: dco_decode_list_prim_u_8_strict(arr[2]),
+      result: dco_decode_list_prim_u_8_strict(arr[3]),
     );
   }
 
@@ -1003,14 +430,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  List<dynamic>
-      dco_decode_list_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
-          dynamic raw) {
+  List<String> dco_decode_list_String(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
-    return (raw as List<dynamic>)
-        .map(
-            dco_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue)
-        .toList();
+    return (raw as List<dynamic>).map(dco_decode_String).toList();
+  }
+
+  @protected
+  List<int> dco_decode_list_prim_u_8_loose(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as List<int>;
   }
 
   @protected
@@ -1020,32 +448,99 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  List<(String, dynamic)>
-      dco_decode_list_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_surreal_value(
-          dynamic raw) {
+  bool? dco_decode_opt_box_autoadd_bool(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
-    return (raw as List<dynamic>)
-        .map(
-            dco_decode_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_surreal_value)
-        .toList();
+    return raw == null ? null : dco_decode_box_autoadd_bool(raw);
   }
 
   @protected
-  (
-    String,
-    dynamic
-  ) dco_decode_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_surreal_value(
+  CapabilitiesConfig? dco_decode_opt_box_autoadd_capabilities_config(
       dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_capabilities_config(raw);
+  }
+
+  @protected
+  Options? dco_decode_opt_box_autoadd_options(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_options(raw);
+  }
+
+  @protected
+  Targets? dco_decode_opt_box_autoadd_targets(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_targets(raw);
+  }
+
+  @protected
+  TargetsConfig? dco_decode_opt_box_autoadd_targets_config(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_targets_config(raw);
+  }
+
+  @protected
+  int? dco_decode_opt_box_autoadd_u_8(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_u_8(raw);
+  }
+
+  @protected
+  Uint8List? dco_decode_opt_list_prim_u_8_strict(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_list_prim_u_8_strict(raw);
+  }
+
+  @protected
+  Options dco_decode_options(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 2) {
-      throw Exception('Expected 2 elements, got ${arr.length}');
-    }
-    return (
-      dco_decode_String(arr[0]),
-      dco_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
-          arr[1]),
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return Options(
+      strict: dco_decode_opt_box_autoadd_bool(arr[0]),
+      queryTimeout: dco_decode_opt_box_autoadd_u_8(arr[1]),
+      transactionTimeout: dco_decode_opt_box_autoadd_u_8(arr[2]),
+      capabilities: dco_decode_opt_box_autoadd_capabilities_config(arr[3]),
     );
+  }
+
+  @protected
+  Targets dco_decode_targets(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    switch (raw[0]) {
+      case 0:
+        return Targets_Bool(
+          dco_decode_bool(raw[1]),
+        );
+      case 1:
+        return Targets_Array(
+          dco_decode_Set_String_None(raw[1]),
+        );
+      case 2:
+        return Targets_Config(
+          allow: dco_decode_opt_box_autoadd_targets_config(raw[1]),
+          deny: dco_decode_opt_box_autoadd_targets_config(raw[2]),
+        );
+      default:
+        throw Exception("unreachable");
+    }
+  }
+
+  @protected
+  TargetsConfig dco_decode_targets_config(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    switch (raw[0]) {
+      case 0:
+        return TargetsConfig_Bool(
+          dco_decode_bool(raw[1]),
+        );
+      case 1:
+        return TargetsConfig_Array(
+          dco_decode_Set_String_None(raw[1]),
+        );
+      default:
+        throw Exception("unreachable");
+    }
   }
 
   @protected
@@ -1074,50 +569,37 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  SurrealProxy
-      sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
+  SurrealFlutterEngine
+      sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealFlutterEngine(
           SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    return SurrealProxyImpl.frbInternalSseDecode(
+    return SurrealFlutterEngineImpl.frbInternalSseDecode(
         sse_decode_usize(deserializer), sse_decode_i_32(deserializer));
   }
 
   @protected
-  SurrealProxy
-      sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
+  SurrealFlutterEngine
+      sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealFlutterEngine(
           SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    return SurrealProxyImpl.frbInternalSseDecode(
+    return SurrealFlutterEngineImpl.frbInternalSseDecode(
         sse_decode_usize(deserializer), sse_decode_i_32(deserializer));
   }
 
   @protected
-  dynamic
-      sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
+  SurrealFlutterEngine
+      sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealFlutterEngine(
           SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    var inner = sse_decode_String(deserializer);
-    return surrencodeType(inner);
-  }
-
-  @protected
-  Map<String, dynamic>
-      sse_decode_Map_String_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue_None(
-          SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    var inner =
-        sse_decode_list_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_surreal_value(
-            deserializer);
-    return Map.fromEntries(inner.map((e) => MapEntry(e.$1, e.$2)));
-  }
-
-  @protected
-  SurrealProxy
-      sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
-          SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return SurrealProxyImpl.frbInternalSseDecode(
+    return SurrealFlutterEngineImpl.frbInternalSseDecode(
         sse_decode_usize(deserializer), sse_decode_i_32(deserializer));
+  }
+
+  @protected
+  Set<String> sse_decode_Set_String_None(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_list_String(deserializer);
+    return Set.from(inner);
   }
 
   @protected
@@ -1142,14 +624,87 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  bool sse_decode_bool(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getUint8() != 0;
+  }
+
+  @protected
+  bool sse_decode_box_autoadd_bool(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_bool(deserializer));
+  }
+
+  @protected
+  CapabilitiesConfig sse_decode_box_autoadd_capabilities_config(
+      SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_capabilities_config(deserializer));
+  }
+
+  @protected
+  Options sse_decode_box_autoadd_options(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_options(deserializer));
+  }
+
+  @protected
+  Targets sse_decode_box_autoadd_targets(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_targets(deserializer));
+  }
+
+  @protected
+  TargetsConfig sse_decode_box_autoadd_targets_config(
+      SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_targets_config(deserializer));
+  }
+
+  @protected
+  int sse_decode_box_autoadd_u_8(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_u_8(deserializer));
+  }
+
+  @protected
+  CapabilitiesConfig sse_decode_capabilities_config(
+      SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var tag_ = sse_decode_i_32(deserializer);
+    switch (tag_) {
+      case 0:
+        var var_field0 = sse_decode_bool(deserializer);
+        return CapabilitiesConfig_Bool(var_field0);
+      case 1:
+        var var_scripting = sse_decode_opt_box_autoadd_bool(deserializer);
+        var var_guestAccess = sse_decode_opt_box_autoadd_bool(deserializer);
+        var var_liveQueryNotifications =
+            sse_decode_opt_box_autoadd_bool(deserializer);
+        var var_functions = sse_decode_opt_box_autoadd_targets(deserializer);
+        var var_networkTargets =
+            sse_decode_opt_box_autoadd_targets(deserializer);
+        return CapabilitiesConfig_Capabilities(
+            scripting: var_scripting,
+            guestAccess: var_guestAccess,
+            liveQueryNotifications: var_liveQueryNotifications,
+            functions: var_functions,
+            networkTargets: var_networkTargets);
+      default:
+        throw UnimplementedError('');
+    }
+  }
+
+  @protected
   DBNotification sse_decode_db_notification(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_list_prim_u_8_strict(deserializer);
     var var_action = sse_decode_action(deserializer);
-    var var_value =
-        sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
-            deserializer);
-    var var_uuid = sse_decode_String(deserializer);
-    return DBNotification(action: var_action, value: var_value, uuid: var_uuid);
+    var var_record = sse_decode_list_prim_u_8_strict(deserializer);
+    var var_result = sse_decode_list_prim_u_8_strict(deserializer);
+    return DBNotification(
+        id: var_id, action: var_action, record: var_record, result: var_result);
   }
 
   @protected
@@ -1159,19 +714,22 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  List<dynamic>
-      sse_decode_list_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
-          SseDeserializer deserializer) {
+  List<String> sse_decode_list_String(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
     var len_ = sse_decode_i_32(deserializer);
-    var ans_ = <dynamic>[];
+    var ans_ = <String>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
-      ans_.add(
-          sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
-              deserializer));
+      ans_.add(sse_decode_String(deserializer));
     }
     return ans_;
+  }
+
+  @protected
+  List<int> sse_decode_list_prim_u_8_loose(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var len_ = sse_decode_i_32(deserializer);
+    return deserializer.buffer.getUint8List(len_);
   }
 
   @protected
@@ -1182,33 +740,135 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  List<(String, dynamic)>
-      sse_decode_list_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_surreal_value(
-          SseDeserializer deserializer) {
+  bool? sse_decode_opt_box_autoadd_bool(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
-    var len_ = sse_decode_i_32(deserializer);
-    var ans_ = <(String, dynamic)>[];
-    for (var idx_ = 0; idx_ < len_; ++idx_) {
-      ans_.add(
-          sse_decode_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_surreal_value(
-              deserializer));
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_bool(deserializer));
+    } else {
+      return null;
     }
-    return ans_;
   }
 
   @protected
-  (
-    String,
-    dynamic
-  ) sse_decode_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_surreal_value(
+  CapabilitiesConfig? sse_decode_opt_box_autoadd_capabilities_config(
       SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    var var_field0 = sse_decode_String(deserializer);
-    var var_field1 =
-        sse_decode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
-            deserializer);
-    return (var_field0, var_field1);
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_capabilities_config(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  Options? sse_decode_opt_box_autoadd_options(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_options(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  Targets? sse_decode_opt_box_autoadd_targets(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_targets(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  TargetsConfig? sse_decode_opt_box_autoadd_targets_config(
+      SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_targets_config(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  int? sse_decode_opt_box_autoadd_u_8(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_u_8(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  Uint8List? sse_decode_opt_list_prim_u_8_strict(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_list_prim_u_8_strict(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  Options sse_decode_options(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_strict = sse_decode_opt_box_autoadd_bool(deserializer);
+    var var_queryTimeout = sse_decode_opt_box_autoadd_u_8(deserializer);
+    var var_transactionTimeout = sse_decode_opt_box_autoadd_u_8(deserializer);
+    var var_capabilities =
+        sse_decode_opt_box_autoadd_capabilities_config(deserializer);
+    return Options(
+        strict: var_strict,
+        queryTimeout: var_queryTimeout,
+        transactionTimeout: var_transactionTimeout,
+        capabilities: var_capabilities);
+  }
+
+  @protected
+  Targets sse_decode_targets(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var tag_ = sse_decode_i_32(deserializer);
+    switch (tag_) {
+      case 0:
+        var var_field0 = sse_decode_bool(deserializer);
+        return Targets_Bool(var_field0);
+      case 1:
+        var var_field0 = sse_decode_Set_String_None(deserializer);
+        return Targets_Array(var_field0);
+      case 2:
+        var var_allow = sse_decode_opt_box_autoadd_targets_config(deserializer);
+        var var_deny = sse_decode_opt_box_autoadd_targets_config(deserializer);
+        return Targets_Config(allow: var_allow, deny: var_deny);
+      default:
+        throw UnimplementedError('');
+    }
+  }
+
+  @protected
+  TargetsConfig sse_decode_targets_config(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var tag_ = sse_decode_i_32(deserializer);
+    switch (tag_) {
+      case 0:
+        var var_field0 = sse_decode_bool(deserializer);
+        return TargetsConfig_Bool(var_field0);
+      case 1:
+        var var_field0 = sse_decode_Set_String_None(deserializer);
+        return TargetsConfig_Array(var_field0);
+      default:
+        throw UnimplementedError('');
+    }
   }
 
   @protected
@@ -1229,12 +889,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  bool sse_decode_bool(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return deserializer.buffer.getUint8() != 0;
-  }
-
-  @protected
   void sse_encode_AnyhowException(
       AnyhowException self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
@@ -1243,49 +897,38 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void
-      sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
-          SurrealProxy self, SseSerializer serializer) {
+      sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealFlutterEngine(
+          SurrealFlutterEngine self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_usize(
-        (self as SurrealProxyImpl).frbInternalSseEncode(move: true),
+        (self as SurrealFlutterEngineImpl).frbInternalSseEncode(move: true),
         serializer);
   }
 
   @protected
   void
-      sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
-          SurrealProxy self, SseSerializer serializer) {
+      sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealFlutterEngine(
+          SurrealFlutterEngine self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_usize(
-        (self as SurrealProxyImpl).frbInternalSseEncode(move: false),
+        (self as SurrealFlutterEngineImpl).frbInternalSseEncode(move: false),
         serializer);
   }
 
   @protected
   void
-      sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
-          dynamic self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_String(surrdecodeType(self), serializer);
-  }
-
-  @protected
-  void
-      sse_encode_Map_String_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue_None(
-          Map<String, dynamic> self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_list_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_surreal_value(
-        self.entries.map((e) => (e.key, e.value)).toList(), serializer);
-  }
-
-  @protected
-  void
-      sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealProxy(
-          SurrealProxy self, SseSerializer serializer) {
+      sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealFlutterEngine(
+          SurrealFlutterEngine self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_usize(
-        (self as SurrealProxyImpl).frbInternalSseEncode(move: null),
+        (self as SurrealFlutterEngineImpl).frbInternalSseEncode(move: null),
         serializer);
+  }
+
+  @protected
+  void sse_encode_Set_String_None(Set<String> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_String(self.toList(), serializer);
   }
 
   @protected
@@ -1314,13 +957,81 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_bool(bool self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putUint8(self ? 1 : 0);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_bool(bool self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_bool(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_capabilities_config(
+      CapabilitiesConfig self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_capabilities_config(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_options(Options self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_options(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_targets(Targets self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_targets(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_targets_config(
+      TargetsConfig self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_targets_config(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_u_8(int self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_8(self, serializer);
+  }
+
+  @protected
+  void sse_encode_capabilities_config(
+      CapabilitiesConfig self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    switch (self) {
+      case CapabilitiesConfig_Bool(field0: final field0):
+        sse_encode_i_32(0, serializer);
+        sse_encode_bool(field0, serializer);
+      case CapabilitiesConfig_Capabilities(
+          scripting: final scripting,
+          guestAccess: final guestAccess,
+          liveQueryNotifications: final liveQueryNotifications,
+          functions: final functions,
+          networkTargets: final networkTargets
+        ):
+        sse_encode_i_32(1, serializer);
+        sse_encode_opt_box_autoadd_bool(scripting, serializer);
+        sse_encode_opt_box_autoadd_bool(guestAccess, serializer);
+        sse_encode_opt_box_autoadd_bool(liveQueryNotifications, serializer);
+        sse_encode_opt_box_autoadd_targets(functions, serializer);
+        sse_encode_opt_box_autoadd_targets(networkTargets, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_db_notification(
       DBNotification self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_prim_u_8_strict(self.id, serializer);
     sse_encode_action(self.action, serializer);
-    sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
-        self.value, serializer);
-    sse_encode_String(self.uuid, serializer);
+    sse_encode_list_prim_u_8_strict(self.record, serializer);
+    sse_encode_list_prim_u_8_strict(self.result, serializer);
   }
 
   @protected
@@ -1330,15 +1041,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void
-      sse_encode_list_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
-          List<dynamic> self, SseSerializer serializer) {
+  void sse_encode_list_String(List<String> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
-      sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
-          item, serializer);
+      sse_encode_String(item, serializer);
     }
+  }
+
+  @protected
+  void sse_encode_list_prim_u_8_loose(
+      List<int> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    serializer.buffer
+        .putUint8List(self is Uint8List ? self : Uint8List.fromList(self));
   }
 
   @protected
@@ -1350,25 +1067,118 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void
-      sse_encode_list_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_surreal_value(
-          List<(String, dynamic)> self, SseSerializer serializer) {
+  void sse_encode_opt_box_autoadd_bool(bool? self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_i_32(self.length, serializer);
-    for (final item in self) {
-      sse_encode_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_surreal_value(
-          item, serializer);
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_bool(self, serializer);
     }
   }
 
   @protected
-  void
-      sse_encode_record_string_custom_serializer_auto_owned_rust_opaque_flutter_rust_bridgefor_generated_rust_auto_opaque_inner_surreal_value(
-          (String, dynamic) self, SseSerializer serializer) {
+  void sse_encode_opt_box_autoadd_capabilities_config(
+      CapabilitiesConfig? self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_String(self.$1, serializer);
-    sse_encode_CustomSerializer_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealValue(
-        self.$2, serializer);
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_capabilities_config(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_options(
+      Options? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_options(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_targets(
+      Targets? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_targets(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_targets_config(
+      TargetsConfig? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_targets_config(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_u_8(int? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_u_8(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_list_prim_u_8_strict(
+      Uint8List? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_list_prim_u_8_strict(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_options(Options self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_opt_box_autoadd_bool(self.strict, serializer);
+    sse_encode_opt_box_autoadd_u_8(self.queryTimeout, serializer);
+    sse_encode_opt_box_autoadd_u_8(self.transactionTimeout, serializer);
+    sse_encode_opt_box_autoadd_capabilities_config(
+        self.capabilities, serializer);
+  }
+
+  @protected
+  void sse_encode_targets(Targets self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    switch (self) {
+      case Targets_Bool(field0: final field0):
+        sse_encode_i_32(0, serializer);
+        sse_encode_bool(field0, serializer);
+      case Targets_Array(field0: final field0):
+        sse_encode_i_32(1, serializer);
+        sse_encode_Set_String_None(field0, serializer);
+      case Targets_Config(allow: final allow, deny: final deny):
+        sse_encode_i_32(2, serializer);
+        sse_encode_opt_box_autoadd_targets_config(allow, serializer);
+        sse_encode_opt_box_autoadd_targets_config(deny, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_targets_config(TargetsConfig self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    switch (self) {
+      case TargetsConfig_Bool(field0: final field0):
+        sse_encode_i_32(0, serializer);
+        sse_encode_bool(field0, serializer);
+      case TargetsConfig_Array(field0: final field0):
+        sse_encode_i_32(1, serializer);
+        sse_encode_Set_String_None(field0, serializer);
+    }
   }
 
   @protected
@@ -1387,126 +1197,40 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putBigUint64(self);
   }
-
-  @protected
-  void sse_encode_bool(bool self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    serializer.buffer.putUint8(self ? 1 : 0);
-  }
 }
 
 @sealed
-class SurrealProxyImpl extends RustOpaque implements SurrealProxy {
+class SurrealFlutterEngineImpl extends RustOpaque
+    implements SurrealFlutterEngine {
   // Not to be used by end users
-  SurrealProxyImpl.frbInternalDcoDecode(List<dynamic> wire)
+  SurrealFlutterEngineImpl.frbInternalDcoDecode(List<dynamic> wire)
       : super.frbInternalDcoDecode(wire, _kStaticData);
 
   // Not to be used by end users
-  SurrealProxyImpl.frbInternalSseDecode(BigInt ptr, int externalSizeOnNative)
+  SurrealFlutterEngineImpl.frbInternalSseDecode(
+      BigInt ptr, int externalSizeOnNative)
       : super.frbInternalSseDecode(ptr, externalSizeOnNative, _kStaticData);
 
   static final _kStaticData = RustArcStaticData(
-    rustArcIncrementStrongCount:
-        RustLib.instance.api.rust_arc_increment_strong_count_SurrealProxy,
-    rustArcDecrementStrongCount:
-        RustLib.instance.api.rust_arc_decrement_strong_count_SurrealProxy,
-    rustArcDecrementStrongCountPtr:
-        RustLib.instance.api.rust_arc_decrement_strong_count_SurrealProxyPtr,
+    rustArcIncrementStrongCount: RustLib
+        .instance.api.rust_arc_increment_strong_count_SurrealFlutterEngine,
+    rustArcDecrementStrongCount: RustLib
+        .instance.api.rust_arc_decrement_strong_count_SurrealFlutterEngine,
+    rustArcDecrementStrongCountPtr: RustLib
+        .instance.api.rust_arc_decrement_strong_count_SurrealFlutterEnginePtr,
   );
 
-  Future<void> authenticate({required String token}) => RustLib.instance.api
-      .crateApiSimpleSurrealProxyAuthenticate(that: this, token: token);
+  Future<Uint8List> execute({required List<int> data}) => RustLib.instance.api
+      .crateApiEngineSurrealFlutterEngineExecute(that: this, data: data);
 
-  Future<dynamic> create({required String res}) => RustLib.instance.api
-      .crateApiSimpleSurrealProxyCreate(that: this, res: res);
+  Future<String> export_({Uint8List? config}) => RustLib.instance.api
+      .crateApiEngineSurrealFlutterEngineExport(that: this, config: config);
 
-  Future<void> delete({required String resource}) => RustLib.instance.api
-      .crateApiSimpleSurrealProxyDelete(that: this, resource: resource);
+  Future<void> import_({required String input}) => RustLib.instance.api
+      .crateApiEngineSurrealFlutterEngineImport(that: this, input: input);
 
-  Future<void> export_({required String path}) => RustLib.instance.api
-      .crateApiSimpleSurrealProxyExport(that: this, path: path);
-
-  Future<void> import_({required String path}) => RustLib.instance.api
-      .crateApiSimpleSurrealProxyImport(that: this, path: path);
-
-  Future<dynamic> insert({required String res, required dynamic data}) =>
-      RustLib.instance.api
-          .crateApiSimpleSurrealProxyInsert(that: this, res: res, data: data);
-
-  Future<void> invalidate() =>
-      RustLib.instance.api.crateApiSimpleSurrealProxyInvalidate(
+  Stream<DBNotification> notifications() =>
+      RustLib.instance.api.crateApiEngineSurrealFlutterEngineNotifications(
         that: this,
       );
-
-  Future<List<dynamic>> query(
-          {required String query, required Map<String, dynamic> vars}) =>
-      RustLib.instance.api.crateApiSimpleSurrealProxyQuery(
-          that: this, query: query, vars: vars);
-
-  Future<dynamic> run({required String function, required dynamic args}) =>
-      RustLib.instance.api.crateApiSimpleSurrealProxyRun(
-          that: this, function: function, args: args);
-
-  Future<dynamic> select({required String resource}) => RustLib.instance.api
-      .crateApiSimpleSurrealProxySelect(that: this, resource: resource);
-
-  Future<void> set_({required String key, required dynamic value}) =>
-      RustLib.instance.api
-          .crateApiSimpleSurrealProxySet(that: this, key: key, value: value);
-
-  Future<String> signin(
-          {required String namespace,
-          required String database,
-          required String access,
-          required dynamic extra}) =>
-      RustLib.instance.api.crateApiSimpleSurrealProxySignin(
-          that: this,
-          namespace: namespace,
-          database: database,
-          access: access,
-          extra: extra);
-
-  Future<String> signup(
-          {required String namespace,
-          required String database,
-          required String access,
-          required dynamic extra}) =>
-      RustLib.instance.api.crateApiSimpleSurrealProxySignup(
-          that: this,
-          namespace: namespace,
-          database: database,
-          access: access,
-          extra: extra);
-
-  Future<void> unset({required String key}) => RustLib.instance.api
-      .crateApiSimpleSurrealProxyUnset(that: this, key: key);
-
-  Future<dynamic> updateContent(
-          {required String resource, required dynamic data}) =>
-      RustLib.instance.api.crateApiSimpleSurrealProxyUpdateContent(
-          that: this, resource: resource, data: data);
-
-  Future<dynamic> updateMerge(
-          {required String resource, required dynamic data}) =>
-      RustLib.instance.api.crateApiSimpleSurrealProxyUpdateMerge(
-          that: this, resource: resource, data: data);
-
-  Future<dynamic> upsert({required String res, required dynamic data}) =>
-      RustLib.instance.api
-          .crateApiSimpleSurrealProxyUpsert(that: this, res: res, data: data);
-
-  Future<void> useDb({required String db}) =>
-      RustLib.instance.api.crateApiSimpleSurrealProxyUseDb(that: this, db: db);
-
-  Future<void> useNs({required String namespace}) => RustLib.instance.api
-      .crateApiSimpleSurrealProxyUseNs(that: this, namespace: namespace);
-
-  Future<String> version() =>
-      RustLib.instance.api.crateApiSimpleSurrealProxyVersion(
-        that: this,
-      );
-
-  Stream<DBNotification> watch({required String resource}) =>
-      RustLib.instance.api
-          .crateApiSimpleSurrealProxyWatch(that: this, resource: resource);
 }

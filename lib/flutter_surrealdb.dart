@@ -1,235 +1,319 @@
 library flutter_surrealdb;
 
 import 'dart:async';
+import 'dart:typed_data';
+import 'package:cbor/simple.dart' as simple;
+import 'package:cbor/cbor.dart';
 
-import 'package:flutter_surrealdb/src/rust/api/simple.dart' as rust;
-
-export 'src/rust/api/simple.dart' show DBNotification;
-export 'src/rust/api/simple.dart';
+import 'package:uuid/uuid_value.dart';
+import 'src/rust/api/engine.dart';
+export 'utils.dart';
+export 'src/rust/api/engine.dart'
+    show SurrealFlutterEngine, Notification, Action;
+export 'src/rust/api/options.dart' show Options;
 export 'src/rust/frb_generated.dart' show RustLib;
 
-abstract class SurrealDB {
-  Future<void> export({required String path});
-  Future<void> import({required String path});
-  Future<dynamic> create({required Resource res});
-  Future<void> delete({required Resource res});
-  Future<dynamic> select({required Resource res});
-  Stream<rust.DBNotification> watch({required Resource res});
-  Future<dynamic> updateContent({required Resource res, required dynamic data});
-  Future<dynamic> updateMerge({required Resource res, required dynamic data});
-  Future<dynamic> insert({required Resource res, required dynamic data});
-  Future<dynamic> upsert({required Resource res, required dynamic data});
-  Future<List<dynamic>> query(
-      {required String query, Map<String, dynamic>? vars});
-  Future<dynamic> run({required String function, required dynamic args});
-  Future<void> set({required String key, required dynamic value});
-  Future<void> unset({required String key});
-  Future<dynamic> authenticate({required String token});
-  Future<String> signin(
-      {required String namespace,
-      required String database,
-      required String access,
-      required dynamic extra});
-  Future<String> signup(
-      {required String namespace,
-      required String database,
-      required String access,
-      required dynamic extra});
-  Future<void> useDb({required String db});
-  Future<void> useNs({required String namespace});
-  Future<void> use({String? db, String? namespace});
-  Future<String> version();
-  void dispose();
-  bool get isDisposed;
-  rust.SurrealProxy get rustbinding;
+import 'utils.dart';
 
-  static Future<SurrealDB> newMem() async {
-    final surreal = await rust.SurrealProxy.newMem();
-    return SurrealDBImpl(surreal);
-  }
+class SurrealExportOptions {
+  final bool users;
+  final bool accesses;
+  final bool params;
+  final bool functions;
+  final bool analyzers;
+  final bool tables;
+  final bool versions;
+  final bool records;
+  final bool sequences;
 
-  static Future<SurrealDB> newFile(String path) async {
-    final surreal = await rust.SurrealProxy.newRocksdb(path: path);
-    return SurrealDBImpl(surreal);
-  }
+  SurrealExportOptions({
+    this.users = true,
+    this.accesses = true,
+    this.params = true,
+    this.functions = true,
+    this.analyzers = true,
+    this.tables = true,
+    this.versions = true,
+    this.records = true,
+    this.sequences = true,
+  });
 }
 
-class SurrealDBImpl implements SurrealDB {
-  final rust.SurrealProxy _surreal;
+class Notification {
+  final UuidValue id;
+  final Action action;
+  final DBRecord record;
+  final dynamic result;
 
-  SurrealDBImpl(this._surreal);
+  Notification({
+    required this.id,
+    required this.action,
+    required this.record,
+    required this.result,
+  });
+}
 
-  @override
-  Future<void> export({required String path}) async {
-    await _surreal.export_(path: path);
+class SurrealDB {
+  final SurrealFlutterEngine _engine;
+  final Stream<Notification> _notifications;
+
+  SurrealDB(this._engine, this._notifications);
+
+  static Future<SurrealDB> connect(String endpoint) async {
+    final engine = await SurrealFlutterEngine.connect(endpoint: endpoint);
+    final noifications = engine
+        .notifications()
+        .map((n) => Notification(
+            id: UuidValue.fromByteList(n.id),
+            action: n.action,
+            record: decodeDBData(cbor.decode(n.record)),
+            result: decodeDBData(cbor.decode(n.result))))
+        .asBroadcastStream();
+    return SurrealDB(engine, noifications);
   }
 
-  @override
-  Future<void> import({required String path}) async {
-    await _surreal.import_(path: path);
-  }
-
-  @override
-  Future<dynamic> create({required Resource res}) async {
-    return await _surreal.create(res: res.resource);
-  }
-
-  @override
-  Future<void> delete({required Resource res}) async {
-    await _surreal.delete(resource: res.resource);
-  }
-
-  @override
-  Future<dynamic> select({required Resource res}) async {
-    return await _surreal.select(resource: res.resource);
-  }
-
-  @override
-  Stream<rust.DBNotification> watch({required Resource res}) {
-    return _surreal.watch(resource: res.resource);
-  }
-
-  @override
-  Future<dynamic> updateContent(
-      {required Resource res, required dynamic data}) async {
-    return await _surreal.updateContent(resource: res.resource, data: data);
-  }
-
-  @override
-  Future<dynamic> updateMerge(
-      {required Resource res, required dynamic data}) async {
-    return await _surreal.updateMerge(resource: res.resource, data: data);
-  }
-
-  @override
-  Future<dynamic> insert({required Resource res, required dynamic data}) async {
-    return await _surreal.insert(res: res.resource, data: data);
-  }
-
-  @override
-  Future<dynamic> upsert({required Resource res, required dynamic data}) async {
-    return await _surreal.upsert(res: res.resource, data: data);
-  }
-
-  @override
-  Future<List<dynamic>> query(
-      {required String query, Map<String, dynamic>? vars}) async {
-    return await _surreal.query(query: query, vars: vars ?? {});
-  }
-
-  @override
-  Future<dynamic> run({required String function, required dynamic args}) async {
-    return await _surreal.run(function: function, args: args);
-  }
-
-  @override
-  Future<void> set({required String key, required dynamic value}) async {
-    await _surreal.set_(key: key, value: value);
-  }
-
-  @override
-  Future<void> unset({required String key}) async {
-    await _surreal.unset(key: key);
-  }
-
-  // AUTH
-
-  Future<void> invalidate() async {
-    await _surreal.invalidate();
-  }
-
-  @override
-  Future<void> authenticate({required String token}) async {
-    await _surreal.authenticate(token: token);
-  }
-
-  @override
-  Future<String> signin(
-      {required String namespace,
-      required String database,
-      required String access,
-      required dynamic extra}) async {
-    return await _surreal.signin(
-        namespace: namespace,
-        database: database,
-        access: access,
-        extra: extra);
-  }
-
-  @override
-  Future<String> signup(
-      {required String namespace,
-      required String database,
-      required String access,
-      required dynamic extra}) async {
-    return await _surreal.signup(
-        namespace: namespace,
-        database: database,
-        access: access,
-        extra: extra.toString());
-  }
-
-  // SCOPING
-  @override
-  Future<void> useDb({required String db}) async {
-    await _surreal.useDb(db: db);
-  }
-
-  @override
-  Future<void> useNs({required String namespace}) async {
-    await _surreal.useNs(namespace: namespace);
-  }
-
-  @override
-  Future<void> use({String? db, String? namespace}) async {
-    if (db != null) {
-      await _surreal.useDb(db: db);
+  Future<String> export({SurrealExportOptions? options}) async {
+    if (options != null) {
+      final encoded = cbor.encode(CborMap({
+        CborString("users"): CborBool(options.users),
+        CborString("accesses"): CborBool(options.accesses),
+        CborString("params"): CborBool(options.params),
+        CborString("functions"): CborBool(options.functions),
+        CborString("analyzers"): CborBool(options.analyzers),
+        CborString("tables"): CborBool(options.tables),
+        CborString("versions"): CborBool(options.versions),
+        CborString("records"): CborBool(options.records),
+        CborString("sequences"): CborBool(options.sequences),
+      }));
+      final data = Uint8List.fromList(encoded);
+      return await _engine.export_(config: data);
     }
-    if (namespace != null) {
-      await _surreal.useNs(namespace: namespace);
+    return await _engine.export_();
+  }
+
+  Future<void> import({required String data}) async {
+    await _engine.import_(input: data);
+  }
+
+  int id = 1;
+  Future<dynamic> _callRPC(String method, dynamic params) async {
+    final data = cbor.encode(CborMap({
+      CborString("id"): CborInt(BigInt.from(id++)),
+      CborString("method"): CborString(method),
+      CborString("params"): encodeDBData(params)
+    }));
+    return decodeDBData(cbor.decode(await _engine.execute(data: data)));
+  }
+
+  Future<dynamic> create(Resource res, dynamic data,
+      {bool? only,
+      String? output,
+      Duration? timeout,
+      DateTime? version}) async {
+    if (output != null &&
+        !["none", "null", "diff", "before", "after"].contains(output)) {
+      throw ArgumentError.value(output, "output",
+          "Invalid output use one of none, null, diff, before, after");
     }
+    final params = {
+      if (only != null) "only": only,
+      if (output != null) "output": output,
+      if (timeout != null) "timeout": timeout,
+      if (version != null) "version": version,
+    };
+    return await _callRPC("create", [res, data, if (params.isNotEmpty) params]);
   }
 
-  // OTHER
-  @override
-  Future<String> version() async {
-    return await _surreal.version();
+  Future<dynamic> delete(Resource thing,
+      {bool? only, String? output, Duration? timeout}) async {
+    if (output != null &&
+        !["none", "null", "diff", "before", "after"].contains(output)) {
+      throw ArgumentError.value(output, "output",
+          "Invalid output use one of none, null, diff, before, after");
+    }
+    final args = {
+      if (only != null) "only": only,
+      if (output != null) "output": output,
+      if (timeout != null) "timeout": timeout,
+    };
+
+    return await _callRPC("delete", [
+      thing,
+      if (args.isNotEmpty) args,
+    ]);
   }
 
-  @override
+  Future<dynamic> info() async {
+    return await _callRPC("info", []);
+  }
+
+  Future<dynamic> insert(
+    DBTable thing,
+    dynamic data, {
+    String? dataExpr,
+    bool? relation,
+    String? output,
+    Duration? timeout,
+    DateTime? version,
+    Map<String, dynamic>? vars,
+  }) async {
+    if (output != null &&
+        !["none", "null", "diff", "before", "after"].contains(output)) {
+      throw ArgumentError.value(output, "output",
+          "Invalid output use one of none, null, diff, before, after");
+    }
+    if (dataExpr != null && !["content", "single"].contains(dataExpr)) {
+      throw ArgumentError.value(
+          dataExpr, "dataExpr", "Invalid dataExpr use one of content, single");
+    }
+    final vals = {
+      if (dataExpr != null) "data_expr": dataExpr,
+      if (relation != null) "relation": relation,
+      if (output != null) "output": output,
+      if (timeout != null) "timeout": timeout,
+      if (version != null) "version": version,
+      if (vars != null) "vars": vars,
+    };
+    return await _callRPC("insert", [
+      thing,
+      data,
+      if (vals.isNotEmpty) vals,
+    ]);
+  }
+
+  // Future<void> invalidate() async {
+  //   await _callRPC("invalidate", []);
+  // }
+
+  // Future<void> set(String key, dynamic value) async {
+  //   await _callRPC("let", [key, value]);
+  // }
+
+  Future<dynamic> rawQuery(String query, {Map<String, dynamic>? vars}) async {
+    return await _callRPC("query", [query, vars]);
+  }
+
+  Future<dynamic> query(String query, {Map<String, dynamic>? vars}) async {
+    final res = await rawQuery(query, vars: vars);
+    for (final e in res) {
+      if (e["error"] != null) {
+        throw QueryError(e["error"]);
+      }
+    }
+    return res.map((e) => e["result"]).toList();
+  }
+
+  // Future<void> reset() async {
+  //   await _callRPC("reset", []);
+  // }
+
+  Future<dynamic> run(String function,
+      {List<dynamic>? args, String? version}) async {
+    return await _callRPC("run", [function, version, args]);
+  }
+
+  Future<dynamic> select(Resource thing) async {
+    return await _callRPC("select", [thing]);
+  }
+
+  // Future<void> unset(String name) async {
+  //   await _callRPC("unset", [name]);
+  // }
+
+  Future<dynamic> update(
+    Resource thing,
+    dynamic data, {
+    String? dataExpr,
+    bool? only,
+    String? cond,
+    String? output,
+    Duration? timeout,
+    Map<String, dynamic>? vars,
+  }) async {
+    if (output != null &&
+        !["none", "null", "diff", "before", "after"].contains(output)) {
+      throw ArgumentError.value(output, "output",
+          "Invalid output use one of none, null, diff, before, after");
+    }
+    if (dataExpr != null &&
+        !["content", "merge", "replace", "patch"].contains(dataExpr)) {
+      throw ArgumentError.value(dataExpr, "dataExpr",
+          "Invalid dataExpr use one of content, merge, replace, patch");
+    }
+    // TODO: why do params not work? maybe its a 3.0 thing?
+    return await _callRPC("update", [
+      thing,
+      data,
+      // {
+      //   if (dataExpr != null) "data_expr": dataExpr,
+      //   if (only != null) "only": only,
+      //   if (cond != null) "cond": cond,
+      //   if (output != null) "output": output,
+      //   if (timeout != null) "timeout": timeout,
+      //   if (vars != null) "vars": vars,
+      // }
+    ]);
+  }
+
+  Future<dynamic> upsert(Resource thing, dynamic data) async {
+    return await _callRPC("upsert", [thing, data]);
+  }
+
+  Future<void> use({required String db, required String ns}) async {
+    await _callRPC("use", [ns, db]);
+  }
+
+  Future<dynamic> version() async {
+    return await _callRPC("version", []);
+  }
+
+  Future<String> engineVersion() async {
+    return await SurrealFlutterEngine.version();
+  }
+
+  Stream<Notification> live(DBTable table, {bool? diff}) {
+    return liveOf(_callRPC("live", [table, if (diff != null) diff])
+        .then((data) => data as UuidValue));
+  }
+
+  Future<void> kill(UuidValue id) async {
+    await _callRPC("kill", [id]);
+  }
+
+  Stream<Notification> liveOf(FutureOr<UuidValue> fid,
+      [Function(UuidValue id)? onKill, bool managed = true]) {
+    final StreamController<Notification> controller =
+        StreamController<Notification>();
+    StreamSubscription<Notification>? sub;
+
+    controller.onListen = () async {
+      final id = await fid;
+      sub = _notifications.listen((n) {
+        if (n.id == id) {
+          controller.add(n);
+        }
+      });
+    };
+    controller.onCancel = () async {
+      final id = await fid;
+      sub?.cancel();
+      onKill?.call(id);
+      if (managed) {
+        kill(id);
+      }
+    };
+    return controller.stream;
+  }
+
   void dispose() {
-    _surreal.dispose();
+    _engine.dispose();
   }
-
-  @override
-  bool get isDisposed {
-    return _surreal.isDisposed;
-  }
-
-  @override
-  rust.SurrealProxy get rustbinding => _surreal;
 }
 
-class Range {
-  //TODO: Decode Ranges
-  final int start;
-  final int end;
-  const Range(this.start, this.end);
-  Range.fromJson(Map<String, dynamic> json)
-      : start = json["start"],
-        end = json["end"];
-  Map<String, dynamic> toJson() => {"start": start, "end": end};
-  @override
-  String toString() => "Range($start, $end)";
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Range &&
-          runtimeType == other.runtimeType &&
-          start == other.start &&
-          end == other.end;
-  @override
-  int get hashCode => start.hashCode ^ end.hashCode;
+class QueryError extends Error {
+  final String error;
+
+  QueryError(this.error);
 }
 
 abstract class Resource {
@@ -246,10 +330,8 @@ class DBTable implements Resource {
         "tb": tb,
       };
 
-  @override
   String get resource => tb;
 
-  @override
   String toString() => "DBTable(tb: $tb)";
 }
 
@@ -257,6 +339,8 @@ class DBRecord implements Resource {
   final String tb;
   final String id;
   const DBRecord(this.tb, this.id);
+
+  DBTable get table => DBTable(tb);
 
   DBRecord.fromJson(Map<String, dynamic> json)
       : tb = json["tb"],
@@ -271,15 +355,12 @@ class DBRecord implements Resource {
     return DBRecord(tb ?? this.tb, id ?? this.id);
   }
 
-  @override
   String get resource => "$tb:$id";
 
-  @override
   String toString() {
-    return "Record(tb: $tb, id: $id)";
+    return "DBRecord(tb: $tb, id: $id)";
   }
 
-  @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is DBRecord &&
@@ -287,6 +368,5 @@ class DBRecord implements Resource {
           tb == other.tb &&
           id == other.id;
 
-  @override
   int get hashCode => tb.hashCode ^ id.hashCode;
 }

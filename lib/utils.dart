@@ -1,105 +1,128 @@
 import 'dart:convert';
 
 import 'package:flutter_surrealdb/flutter_surrealdb.dart';
+import 'package:cbor/cbor.dart';
+import 'package:uuid/uuid.dart';
 
-//TODO: Parse https://pub.dev/packages/geojson_vi
-dynamic surrencodeType(String value) {
-  final ret = json.decode(value, reviver: (key, value) {
-    if (value is Map) {
-      if (value.length == 1) {
-        if (value.containsKey("Strand")) {
-          return value["Strand"];
-        } else if (value.containsKey("Bool")) {
-          return value["Bool"];
-        } else if (value.containsKey("Number")) {
-          if (value["Number"].containsKey("Int")) {
-            return value["Number"]["Int"];
-          }
-          if (value["Number"].containsKey("Float")) {
-            return value["Number"]["Float"];
-          }
-        } else if (value.containsKey("Array")) {
-          return value["Array"];
-        } else if (value.containsKey("String")) {
-          return value["String"];
-        } else if (value.containsKey("Thing")) {
-          return DBRecord.fromJson(
-              {"tb": value["Thing"]["tb"], "id": value["Thing"]["id"]});
-        } else if (value.containsKey("Object")) {
-          return value["Object"];
-        } else if (value.containsKey("Datetime")) {
-          return DateTime.tryParse(value["Datetime"]);
-        } else if (value.containsKey("Uuid")) {
-          return value["Uuid"];
+CborValue encodeDateTime(DateTime value) {
+  final val = value.toUtc();
+  return CborList([
+    CborInt(BigInt.from(val.millisecondsSinceEpoch ~/ 1000)),
+    CborInt(BigInt.from(
+        val.microsecond * 1000 + (val.millisecondsSinceEpoch % 1000) * 1000000))
+  ], tags: [
+    12
+  ]);
+}
+
+DateTime decodeDateTime(CborList value) {
+  return DateTime.fromMillisecondsSinceEpoch(
+          (value.first as CborInt).toInt() * 1000,
+          isUtc: true)
+      .add(Duration(microseconds: (value.last as CborInt).toInt() ~/ 1000));
+}
+
+// TODO: fix params
+// TODO: Range
+// TODO: Geometry
+// TODO: UUID
+// TODO: Insert Relation Table
+CborValue encodeDBData(dynamic data) {
+  return switch (data) {
+    final String a => CborString(a),
+    final int a => CborInt(BigInt.from(a)),
+    final DBTable a => CborString(a.tb, tags: [7]),
+    final DBRecord a =>
+      CborList([CborString(a.tb), CborString(a.id)], tags: [8]),
+    final DateTime a => encodeDateTime(a),
+    final Duration a => CborList([
+        CborInt(BigInt.from(a.inSeconds)),
+        CborInt(BigInt.from(a.inMicroseconds * 1000))
+      ], tags: [
+        14
+      ]),
+    final BigInt a => CborBigInt(a),
+    final double a => CborFloat(a),
+    final UuidValue a => CborBytes(a.toBytes()),
+    final bool a => CborBool(a),
+    final List a => CborList(a.map(encodeDBData).toList()),
+    final Map a =>
+      CborMap(a.map((k, v) => MapEntry(encodeDBData(k), encodeDBData(v)))),
+    final value => (() {
+        if (value == null) {
+          return const CborNull();
         }
-      }
-    }
-    if (value == "Null" || value == "None") {
-      return null;
-    }
-    return value;
-  });
-  return ret;
-}
-
-String surrdecodeType(dynamic value) {
-  final ret = json.encode(wrap(value));
-  return ret;
-}
-
-dynamic wrap(dynamic value) {
-  if(value ==null){
-    return "Null";
-  }
-  return switch (value) {
-    final List<dynamic> val => {"Array": val.map(wrap).toList()},
-    final String val => {"Strand": val},
-    final bool val => {"Bool": val},
-    final int val => {
-        "Number": {"Int": val}
-      },
-    final num val => {
-        "Number": {"Float": val.toDouble()}
-      },
-    final DateTime val => wrapDateTime(val),
-    final DBRecord val => wrap(val.toJson()),
-    final Map<String, dynamic> val => wrapMap(val),
-    _ => () {
-      // Best-effort serialisation; fall back to a clear error.
-      try {
-        return wrap((value as dynamic).toJson());
-      } on NoSuchMethodError {
+        try {
+          return encodeDBData(value.toSurrealObject());
+        } on NoSuchMethodError {}
+        try {
+          return value.toCbor() as CborValue;
+        } on NoSuchMethodError {}
+        try {
+          return encodeDBData(value.toJson());
+        } on NoSuchMethodError {}
         throw UnsupportedError(
-            'Surreal: value of type ${value.runtimeType} is not serialisable');
-      }
-    }(),
+            'Surreal[Encode]: value of type ${value.runtimeType} is not encodable');
+      })(),
   };
 }
 
-Map<String, dynamic> wrapDateTime(DateTime value) {
-  if (value.isUtc) {
-    return {"Datetime": value.toIso8601String()};
+dynamic decodeDBData(CborValue value) {
+  if (value.tags.isNotEmpty) {
+    int tag = value.tags.first;
+    switch (tag) {
+      case 6:
+        return null;
+      case 7:
+        return DBTable(value.toString());
+      case 8:
+        if (value is! CborList || value.length != 2) {
+          throw ArgumentError("Invalid record");
+        }
+        return DBRecord(value.first.toString(), value.last.toString());
+      case 12:
+        if (value is! CborList || value.length != 2) {
+          throw ArgumentError("Invalid date");
+        }
+        return decodeDateTime(value);
+      case 13:
+        if (value is! CborList || value.length != 2) {
+          throw ArgumentError("Invalid duration");
+        }
+        return Duration(
+            seconds: (value.first as CborInt).toInt(),
+            microseconds: ((value.last as CborInt).toInt() / 1000).round());
+      case 37:
+        if (value is! CborBytes) {
+          throw ArgumentError("Invalid UUID");
+        }
+        return UuidValue.fromList(value.bytes);
+    }
   }
-  return {
-    "Datetime":
-        "${value.toIso8601String()}+${_twoDigits(value.timeZoneOffset.inHours)}:${_twoDigits(value.timeZoneOffset.inMinutes % 60)}"
-  };
-}
-
-String _twoDigits(int n) {
-  if (n >= 10) return "$n";
-  return "0$n";
-}
-
-Map<String, dynamic> wrapMap(Map<String, dynamic> map) {
-  if (map.containsKey("tb") && map.containsKey("id")) {
-    return {
-      "Thing": {
-        "tb": map["tb"],
-        "id": {"String": map["id"]}
-      }
-    };
+  if (value is CborInt) {
+    return value.toInt();
   }
-  final wrapped = map.map((key, value) => MapEntry(key, wrap(value)));
-  return {"Object": wrapped};
+  if (value is CborBigInt) {
+    return value.toBigInt();
+  }
+  if (value is CborFloat) {
+    return value.value;
+  }
+  if (value is CborBool) {
+    return value.value;
+  }
+  if (value is CborString) {
+    return value.toString();
+  }
+  if (value is CborList) {
+    return value.toList().map(decodeDBData).toList();
+  }
+  if (value is CborMap) {
+    return value.map((k, v) => MapEntry(decodeDBData(k), decodeDBData(v)));
+  }
+  if (value is CborNull) {
+    return null;
+  }
+  throw UnsupportedError(
+      "Unknown type ${value.runtimeType} with tag ${value.tags}");
 }
