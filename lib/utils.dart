@@ -121,7 +121,9 @@ dynamic decodeDBData(CborValue value) {
     return value.toList().map(decodeDBData).toList();
   }
   if (value is CborMap) {
-    return value.map((k, v) => MapEntry(decodeDBData(k), decodeDBData(v)));
+    return value
+        .map((k, v) => MapEntry(decodeDBData(k), decodeDBData(v)))
+        .cast<String, dynamic>();
   }
   if (value is CborNull) {
     return null;
