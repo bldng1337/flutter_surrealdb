@@ -1,4 +1,4 @@
-import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter_surrealdb/flutter_surrealdb.dart';
 import 'package:cbor/cbor.dart';
@@ -29,6 +29,7 @@ DateTime decodeDateTime(CborList value) {
 // TODO: Insert Relation Table
 CborValue encodeDBData(dynamic data) {
   return switch (data) {
+    final Uint8List a => CborBytes(a),
     final String a => CborString(a),
     final int a => CborInt(BigInt.from(a)),
     final DBTable a => CborString(a.tb, tags: [7]),
@@ -37,13 +38,15 @@ CborValue encodeDBData(dynamic data) {
     final DateTime a => encodeDateTime(a),
     final Duration a => CborList([
         CborInt(BigInt.from(a.inSeconds)),
-        CborInt(BigInt.from(a.inMicroseconds * 1000))
+        CborInt(BigInt.from(
+            (a.inMicroseconds - a.inSeconds * Duration.microsecondsPerSecond) *
+                1000))
       ], tags: [
         14
       ]),
     final BigInt a => CborBigInt(a),
     final double a => CborFloat(a),
-    final UuidValue a => CborBytes(a.toBytes()),
+    final UuidValue a => CborBytes(a.toBytes(), tags: [37]),
     final bool a => CborBool(a),
     final List a => CborList(a.map(encodeDBData).toList()),
     final Map a =>
@@ -77,24 +80,24 @@ dynamic decodeDBData(CborValue value) {
         return DBTable(value.toString());
       case 8:
         if (value is! CborList || value.length != 2) {
-          throw ArgumentError("Invalid record");
+          throw ArgumentError("Surreal[Decode]: Invalid record");
         }
         return DBRecord(value.first.toString(), value.last.toString());
       case 12:
         if (value is! CborList || value.length != 2) {
-          throw ArgumentError("Invalid date");
+          throw ArgumentError("Surreal[Decode]: Invalid date");
         }
         return decodeDateTime(value);
-      case 13:
+      case 14:
         if (value is! CborList || value.length != 2) {
-          throw ArgumentError("Invalid duration");
+          throw ArgumentError("Surreal[Decode]: Invalid duration");
         }
         return Duration(
             seconds: (value.first as CborInt).toInt(),
             microseconds: ((value.last as CborInt).toInt() / 1000).round());
       case 37:
         if (value is! CborBytes) {
-          throw ArgumentError("Invalid UUID");
+          throw ArgumentError("Surreal[Decode]: Invalid UUID");
         }
         return UuidValue.fromList(value.bytes);
     }
@@ -123,6 +126,9 @@ dynamic decodeDBData(CborValue value) {
   if (value is CborNull) {
     return null;
   }
+  if (value is CborBytes) {
+    return Uint8List.fromList(value.bytes);
+  }
   throw UnsupportedError(
-      "Unknown type ${value.runtimeType} with tag ${value.tags}");
+      "Surreal[Decode]: Unknown type ${value.runtimeType} with tag ${value.tags}");
 }

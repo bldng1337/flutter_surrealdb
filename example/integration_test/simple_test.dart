@@ -1,7 +1,11 @@
+import 'dart:typed_data';
+
 import 'package:integration_test/integration_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_surrealdb/flutter_surrealdb.dart';
+import 'package:uuid/uuid.dart';
 import 'package:uuid/uuid_value.dart';
+import 'package:uuid/v4.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -236,9 +240,11 @@ void main() {
       "string": "test",
       "array": ["test1", "test2"],
       "object": {"test": "test"},
-      // "duration": const Duration(seconds: 10, milliseconds: 500),
+      "duration": const Duration(seconds: 10, milliseconds: 500),
       "datetimeutc": DateTime.now().toUtc(),
       "uuid": "a75d0e30-3eb1-4732-8f90-668e4af81921",
+      "uuid2": UuidValue.fromString(const UuidV4().generate()),
+      "bytes": Uint8List.fromList([1, 2, 3]),
     };
     final decoded = decodeDBData(encodeDBData(obj));
     expect(decoded, obj);

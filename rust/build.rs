@@ -9,9 +9,11 @@ fn main() {
         .find(|p| {
             let name = p.name.as_str();
 
-            name == "surrealdb" || name == "surrealdb-beta" || name == "surrealdb-alpha"
+            name == "surrealdb-core"
+                || name == "surrealdb-core-beta"
+                || name == "surrealdb-core-alpha"
         })
-        .expect("Failed to find surrealdb in Cargo.lock");
+        .expect("Failed to find surrealdb-core in Cargo.lock");
 
     let version = format!(
         "{}.{}.{}",
