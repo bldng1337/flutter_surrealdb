@@ -38,6 +38,24 @@ void main() {
     db.dispose();
   });
 
+  test('select type', () async {
+    final db = await SurrealDB.connect("mem://");
+    await db.use(db: "test", ns: "test");
+    var data = {
+      "hello": "world",
+      "num": 1,
+      "bool": true,
+      "float": 1.0,
+      "string": "test",
+      "array": ["test1", "test2"],
+      "object": {"test": "test"}
+    };
+    final insert = await db.insert(const DBTable("test"), data);
+    expect(insert[0], isA<Map<String, dynamic>>());
+    final select = await db.select(insert[0]["id"]);
+    expect(select, isA<Map<String, dynamic>>());
+  });
+
   test("Wrapper create", () async {
     final db = await SurrealDB.connect("mem://");
     await db.use(db: "test", ns: "test");
