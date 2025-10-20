@@ -101,34 +101,25 @@ dynamic decodeDBData(CborValue value) {
         }
         return UuidValue.fromList(value.bytes);
     }
-  }
-  if (value is CborInt) {
+  } else if (value is CborInt) {
     return value.toInt();
-  }
-  if (value is CborBigInt) {
+  } else if (value is CborBigInt) {
     return value.toBigInt();
-  }
-  if (value is CborFloat) {
+  } else if (value is CborFloat) {
     return value.value;
-  }
-  if (value is CborBool) {
+  } else if (value is CborBool) {
     return value.value;
-  }
-  if (value is CborString) {
+  } else if (value is CborString) {
     return value.toString();
-  }
-  if (value is CborList) {
+  } else if (value is CborList) {
     return value.toList().map(decodeDBData).toList();
-  }
-  if (value is CborMap) {
-    return value
-        .map((k, v) => MapEntry(decodeDBData(k), decodeDBData(v)))
-        .cast<String, dynamic>();
-  }
-  if (value is CborNull) {
+  } else if (value is CborMap) {
+    final map = value
+        .map((k, v) => MapEntry(decodeDBData(k) as String, decodeDBData(v)));
+    return map;
+  } else if (value is CborNull) {
     return null;
-  }
-  if (value is CborBytes) {
+  } else if (value is CborBytes) {
     return Uint8List.fromList(value.bytes);
   }
   throw UnsupportedError(
