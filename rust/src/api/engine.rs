@@ -4,14 +4,14 @@ use std::time::Duration;
 use tokio::sync::RwLock;
 
 use arc_swap::ArcSwap;
-
-use surrealdb::dbs::Session;
-use surrealdb::kvs::export::Config;
-use surrealdb::kvs::Datastore;
-use surrealdb::rpc::format::cbor;
-
-use surrealdb::rpc::RpcContext;
-use surrealdb::sql::Value;
+use dashmap::DashMap;
+use surrealdb_core::dbs::Session;
+pub use surrealdb_core::kvs::export::{Config, TableConfig};
+use surrealdb_core::kvs::{Datastore, LockType, TransactionType};
+use surrealdb_core::rpc::format::cbor;
+pub use surrealdb_core::rpc::Method;
+use surrealdb_core::rpc::{RpcError, RpcProtocol};
+use surrealdb_types::{Array, SurrealValue, Value};
 use tokio::sync::Semaphore;
 
 use anyhow::{anyhow, Result};
@@ -23,6 +23,56 @@ use crate::frb_generated::StreamSink;
 #[frb(opaque)]
 pub struct SurrealFlutterEngine(RwLock<SurrealFlutterConnection>);
 
+#[frb(mirror(Config))]
+pub struct _Config {
+    pub users: bool,
+    pub accesses: bool,
+    pub params: bool,
+    pub functions: bool,
+    pub analyzers: bool,
+    pub tables: TableConfig,
+    pub versions: bool,
+    pub records: bool,
+    pub sequences: bool,
+}
+
+#[frb(mirror(TableConfig))]
+pub enum _TableConfig {
+    All,
+    None,
+    Some(Vec<String>),
+}
+
+#[frb(mirror(Method))]
+pub enum _Method {
+    Unknown,
+    Ping,
+    Info,
+    Use,
+    Signup,
+    Signin,
+    Authenticate,
+    Invalidate,
+    Reset,
+    Kill,
+    Live,
+    Set,
+    Unset,
+    Select,
+    Insert,
+    Create,
+    Upsert,
+    Update,
+    Merge,
+    Patch,
+    Delete,
+    Version,
+    Query,
+    Relate,
+    Run,
+    InsertRelation,
+}
+
 #[derive(Clone)]
 pub enum Action {
     Create,
@@ -31,12 +81,12 @@ pub enum Action {
     Unkown,
 }
 
-impl From<surrealdb::dbs::Action> for Action {
-    fn from(action: surrealdb::dbs::Action) -> Self {
+impl From<surrealdb_types::Action> for Action {
+    fn from(action: surrealdb_types::Action) -> Self {
         match action {
-            surrealdb::dbs::Action::Create => Action::Create,
-            surrealdb::dbs::Action::Update => Action::Update,
-            surrealdb::dbs::Action::Delete => Action::Delete,
+            surrealdb_types::Action::Create => Action::Create,
+            surrealdb_types::Action::Update => Action::Update,
+            surrealdb_types::Action::Delete => Action::Delete,
             _ => Action::Unkown,
         }
     }
@@ -51,14 +101,18 @@ pub struct DBNotification {
 }
 
 impl SurrealFlutterEngine {
-    pub async fn execute(&self, data: Vec<u8>) -> Result<Vec<u8>> {
+    pub async fn execute(
+        &self,
+        method: Method,
+        params: Vec<u8>,
+        version: Option<u8>,
+    ) -> Result<Vec<u8>> {
         let engine = self.0.read().await;
-        let in_data = cbor::req(data.to_vec())?;
-        let res =
-            RpcContext::execute(&*engine, in_data.version, in_data.method, in_data.params).await?;
+        let params = cbor::decode(&params)?;
+        let res = RpcProtocol::execute(&*engine, None, None, method, params.into_array()?).await?;
 
-        let value: Value = res.try_into()?;
-        let out = cbor::res(value)?;
+        let value: Value = res.into_value();
+        let out = cbor::encode(value)?;
 
         Ok(out.as_slice().into())
     }
@@ -80,8 +134,8 @@ impl SurrealFlutterEngine {
 
             while let Ok(notification) = notification_stream.recv().await {
                 if let (Ok(record), Ok(result)) = (
-                    cbor::res(notification.record),
-                    cbor::res(notification.result),
+                    cbor::encode(notification.record),
+                    cbor::encode(notification.result),
                 ) {
                     let _ = sink.add(DBNotification {
                         id: notification.id.as_bytes().to_vec(),
@@ -124,30 +178,30 @@ impl SurrealFlutterEngine {
             kvs: Arc::new(kvs),
             session: ArcSwap::new(Arc::new(session)),
             lock: Arc::new(Semaphore::new(1)),
+            sessions: DashMap::new(),
         };
 
         Ok(SurrealFlutterEngine(RwLock::new(connection)))
     }
 
-    pub async fn export(&self, config: Option<Vec<u8>>) -> Result<String> {
+    pub async fn export(&self, config: Option<Config>) -> Result<String> {
         let engine = self.0.read().await;
         let (tx, rx) = channel::unbounded();
 
         match config {
             Some(config) => {
-                let in_config = cbor::parse_value(config.to_vec())?;
-                let config = Config::try_from(&in_config)?;
-
+                // let in_config = cbor::decode(&config.to_vec())?;
+                // let config = Config::try_from(&in_config)?;
                 engine
                     .kvs
-                    .export_with_config(engine.session().as_ref(), tx, config)
+                    .export_with_config(engine.get_session(None).as_ref(), tx, config)
                     .await?
                     .await?;
             }
             None => {
                 engine
                     .kvs
-                    .export(engine.session().as_ref(), tx)
+                    .export(engine.get_session(None).as_ref(), tx)
                     .await?
                     .await?;
             }
@@ -166,7 +220,10 @@ impl SurrealFlutterEngine {
     pub async fn import(&self, input: String) -> Result<()> {
         let engine = self.0.read().await;
 
-        engine.kvs.import(&input, engine.session().as_ref()).await?;
+        engine
+            .kvs
+            .import(&input, engine.get_session(None).as_ref())
+            .await?;
 
         Ok(())
     }

@@ -8,8 +8,10 @@ import 'package:flutter_surrealdb/utils.dart';
 import '../frb_generated.dart';
 import 'options.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
+import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
+part 'engine.freezed.dart';
 
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `from`
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<SurrealFlutterEngine>>
 abstract class SurrealFlutterEngine implements RustOpaqueInterface {
@@ -18,9 +20,10 @@ abstract class SurrealFlutterEngine implements RustOpaqueInterface {
       RustLib.instance.api.crateApiEngineSurrealFlutterEngineConnect(
           endpoint: endpoint, opts: opts);
 
-  Future<Uint8List> execute({required List<int> data});
+  Future<Uint8List> execute(
+      {required Method method, required List<int> params, int? version});
 
-  Future<String> export_({Uint8List? config});
+  Future<String> export_({Config? config});
 
   Future<void> import_({required String input});
 
@@ -36,6 +39,57 @@ enum Action {
   delete,
   unkown,
   ;
+}
+
+class Config {
+  final bool users;
+  final bool accesses;
+  final bool params;
+  final bool functions;
+  final bool analyzers;
+  final TableConfig tables;
+  final bool versions;
+  final bool records;
+  final bool sequences;
+
+  const Config({
+    required this.users,
+    required this.accesses,
+    required this.params,
+    required this.functions,
+    required this.analyzers,
+    required this.tables,
+    required this.versions,
+    required this.records,
+    required this.sequences,
+  });
+
+  @override
+  int get hashCode =>
+      users.hashCode ^
+      accesses.hashCode ^
+      params.hashCode ^
+      functions.hashCode ^
+      analyzers.hashCode ^
+      tables.hashCode ^
+      versions.hashCode ^
+      records.hashCode ^
+      sequences.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Config &&
+          runtimeType == other.runtimeType &&
+          users == other.users &&
+          accesses == other.accesses &&
+          params == other.params &&
+          functions == other.functions &&
+          analyzers == other.analyzers &&
+          tables == other.tables &&
+          versions == other.versions &&
+          records == other.records &&
+          sequences == other.sequences;
 }
 
 class DBNotification {
@@ -64,4 +118,45 @@ class DBNotification {
           action == other.action &&
           record == other.record &&
           result == other.result;
+}
+
+enum Method {
+  unknown,
+  ping,
+  info,
+  use,
+  signup,
+  signin,
+  authenticate,
+  invalidate,
+  reset,
+  kill,
+  live,
+  set_,
+  unset,
+  select,
+  insert,
+  create,
+  upsert,
+  update,
+  merge,
+  patch,
+  delete,
+  version,
+  query,
+  relate,
+  run,
+  insertRelation,
+  ;
+}
+
+@freezed
+sealed class TableConfig with _$TableConfig {
+  const TableConfig._();
+
+  const factory TableConfig.all() = TableConfig_All;
+  const factory TableConfig.none() = TableConfig_None;
+  const factory TableConfig.some(
+    List<String> field0,
+  ) = TableConfig_Some;
 }

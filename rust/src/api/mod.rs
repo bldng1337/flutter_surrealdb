@@ -21,3 +21,8 @@ pub mod options;
 //     pub static ref FLUTTER_RUST_BRIDGE_HANDLER: $flutter_rust_bridge::DefaultHandler<&'static std::thread::LocalKey<$flutter_rust_bridge::for_generated::SimpleThreadPool>>
 //         = $flutter_rust_bridge::DefaultHandler::new_simple(&THREAD_POOL);
 // }
+
+#[flutter_rust_bridge::frb(init)]
+pub fn init_app() {
+    // flutter_rust_bridge::setup_default_user_utils();
+}

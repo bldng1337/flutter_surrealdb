@@ -164,7 +164,7 @@ void main() {
     expect(insert[0]["id"], isA<DBRecord>());
     final DBRecord record = insert[0]["id"];
     data["id"] = record;
-    await db.update(record, {"hello": "world2"});
+    await db.update(record, {"hello": "world2"}, dataExpr: DataExpr.merge);
     data["hello"] = "world2";
     final result = await db.select(record);
     expect(result, data);

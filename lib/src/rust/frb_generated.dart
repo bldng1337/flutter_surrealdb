@@ -61,7 +61,9 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
       RustLibWire.fromExternalLibrary;
 
   @override
-  Future<void> executeRustInitializers() async {}
+  Future<void> executeRustInitializers() async {
+    await api.crateApiInitApp();
+  }
 
   @override
   ExternalLibraryLoaderConfig get defaultExternalLibraryLoaderConfig =>
@@ -71,7 +73,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.11.1';
 
   @override
-  int get rustContentHash => 1929108195;
+  int get rustContentHash => 835786501;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -86,10 +88,13 @@ abstract class RustLibApi extends BaseApi {
       {required String endpoint, Options? opts});
 
   Future<Uint8List> crateApiEngineSurrealFlutterEngineExecute(
-      {required SurrealFlutterEngine that, required List<int> data});
+      {required SurrealFlutterEngine that,
+      required Method method,
+      required List<int> params,
+      int? version});
 
   Future<String> crateApiEngineSurrealFlutterEngineExport(
-      {required SurrealFlutterEngine that, Uint8List? config});
+      {required SurrealFlutterEngine that, Config? config});
 
   Future<void> crateApiEngineSurrealFlutterEngineImport(
       {required SurrealFlutterEngine that, required String input});
@@ -98,6 +103,8 @@ abstract class RustLibApi extends BaseApi {
       {required SurrealFlutterEngine that});
 
   Future<String> crateApiEngineSurrealFlutterEngineVersion();
+
+  Future<void> crateApiInitApp();
 
   RustArcIncrementStrongCountFnType
       get rust_arc_increment_strong_count_SurrealFlutterEngine;
@@ -147,13 +154,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @override
   Future<Uint8List> crateApiEngineSurrealFlutterEngineExecute(
-      {required SurrealFlutterEngine that, required List<int> data}) {
+      {required SurrealFlutterEngine that,
+      required Method method,
+      required List<int> params,
+      int? version}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealFlutterEngine(
             that, serializer);
-        sse_encode_list_prim_u_8_loose(data, serializer);
+        sse_encode_method(method, serializer);
+        sse_encode_list_prim_u_8_loose(params, serializer);
+        sse_encode_opt_box_autoadd_u_8(version, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
             funcId: 2, port: port_);
       },
@@ -162,7 +174,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         decodeErrorData: sse_decode_AnyhowException,
       ),
       constMeta: kCrateApiEngineSurrealFlutterEngineExecuteConstMeta,
-      argValues: [that, data],
+      argValues: [that, method, params, version],
       apiImpl: this,
     ));
   }
@@ -170,18 +182,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiEngineSurrealFlutterEngineExecuteConstMeta =>
       const TaskConstMeta(
         debugName: "SurrealFlutterEngine_execute",
-        argNames: ["that", "data"],
+        argNames: ["that", "method", "params", "version"],
       );
 
   @override
   Future<String> crateApiEngineSurrealFlutterEngineExport(
-      {required SurrealFlutterEngine that, Uint8List? config}) {
+      {required SurrealFlutterEngine that, Config? config}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealFlutterEngine(
             that, serializer);
-        sse_encode_opt_list_prim_u_8_strict(config, serializer);
+        sse_encode_opt_box_autoadd_config(config, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
             funcId: 3, port: port_);
       },
@@ -283,6 +295,29 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         argNames: [],
       );
 
+  @override
+  Future<void> crateApiInitApp() {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 7, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: null,
+      ),
+      constMeta: kCrateApiInitAppConstMeta,
+      argValues: [],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiInitAppConstMeta => const TaskConstMeta(
+        debugName: "init_app",
+        argNames: [],
+      );
+
   RustArcIncrementStrongCountFnType
       get rust_arc_increment_strong_count_SurrealFlutterEngine => wire
           .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealFlutterEngine;
@@ -365,6 +400,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Config dco_decode_box_autoadd_config(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_config(raw);
+  }
+
+  @protected
   Options dco_decode_box_autoadd_options(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_options(raw);
@@ -410,6 +451,25 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Config dco_decode_config(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 9)
+      throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
+    return Config(
+      users: dco_decode_bool(arr[0]),
+      accesses: dco_decode_bool(arr[1]),
+      params: dco_decode_bool(arr[2]),
+      functions: dco_decode_bool(arr[3]),
+      analyzers: dco_decode_bool(arr[4]),
+      tables: dco_decode_table_config(arr[5]),
+      versions: dco_decode_bool(arr[6]),
+      records: dco_decode_bool(arr[7]),
+      sequences: dco_decode_bool(arr[8]),
+    );
+  }
+
+  @protected
   DBNotification dco_decode_db_notification(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -448,6 +508,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Method dco_decode_method(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return Method.values[raw as int];
+  }
+
+  @protected
   bool? dco_decode_opt_box_autoadd_bool(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_bool(raw);
@@ -458,6 +524,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_capabilities_config(raw);
+  }
+
+  @protected
+  Config? dco_decode_opt_box_autoadd_config(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_config(raw);
   }
 
   @protected
@@ -485,12 +557,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  Uint8List? dco_decode_opt_list_prim_u_8_strict(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return raw == null ? null : dco_decode_list_prim_u_8_strict(raw);
-  }
-
-  @protected
   Options dco_decode_options(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -502,6 +568,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       transactionTimeout: dco_decode_opt_box_autoadd_u_8(arr[2]),
       capabilities: dco_decode_opt_box_autoadd_capabilities_config(arr[3]),
     );
+  }
+
+  @protected
+  TableConfig dco_decode_table_config(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    switch (raw[0]) {
+      case 0:
+        return const TableConfig_All();
+      case 1:
+        return const TableConfig_None();
+      case 2:
+        return TableConfig_Some(
+          dco_decode_list_String(raw[1]),
+        );
+      default:
+        throw Exception("unreachable");
+    }
   }
 
   @protected
@@ -643,6 +726,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Config sse_decode_box_autoadd_config(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_config(deserializer));
+  }
+
+  @protected
   Options sse_decode_box_autoadd_options(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_options(deserializer));
@@ -697,6 +786,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Config sse_decode_config(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_users = sse_decode_bool(deserializer);
+    var var_accesses = sse_decode_bool(deserializer);
+    var var_params = sse_decode_bool(deserializer);
+    var var_functions = sse_decode_bool(deserializer);
+    var var_analyzers = sse_decode_bool(deserializer);
+    var var_tables = sse_decode_table_config(deserializer);
+    var var_versions = sse_decode_bool(deserializer);
+    var var_records = sse_decode_bool(deserializer);
+    var var_sequences = sse_decode_bool(deserializer);
+    return Config(
+        users: var_users,
+        accesses: var_accesses,
+        params: var_params,
+        functions: var_functions,
+        analyzers: var_analyzers,
+        tables: var_tables,
+        versions: var_versions,
+        records: var_records,
+        sequences: var_sequences);
+  }
+
+  @protected
   DBNotification sse_decode_db_notification(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_id = sse_decode_list_prim_u_8_strict(deserializer);
@@ -740,6 +853,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Method sse_decode_method(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return Method.values[inner];
+  }
+
+  @protected
   bool? sse_decode_opt_box_autoadd_bool(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -757,6 +877,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
     if (sse_decode_bool(deserializer)) {
       return (sse_decode_box_autoadd_capabilities_config(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  Config? sse_decode_opt_box_autoadd_config(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_config(deserializer));
     } else {
       return null;
     }
@@ -808,17 +939,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  Uint8List? sse_decode_opt_list_prim_u_8_strict(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    if (sse_decode_bool(deserializer)) {
-      return (sse_decode_list_prim_u_8_strict(deserializer));
-    } else {
-      return null;
-    }
-  }
-
-  @protected
   Options sse_decode_options(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_strict = sse_decode_opt_box_autoadd_bool(deserializer);
@@ -831,6 +951,24 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         queryTimeout: var_queryTimeout,
         transactionTimeout: var_transactionTimeout,
         capabilities: var_capabilities);
+  }
+
+  @protected
+  TableConfig sse_decode_table_config(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var tag_ = sse_decode_i_32(deserializer);
+    switch (tag_) {
+      case 0:
+        return const TableConfig_All();
+      case 1:
+        return const TableConfig_None();
+      case 2:
+        var var_field0 = sse_decode_list_String(deserializer);
+        return TableConfig_Some(var_field0);
+      default:
+        throw UnimplementedError('');
+    }
   }
 
   @protected
@@ -976,6 +1114,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_config(Config self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_config(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_options(Options self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_options(self, serializer);
@@ -1025,6 +1169,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_config(Config self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_bool(self.users, serializer);
+    sse_encode_bool(self.accesses, serializer);
+    sse_encode_bool(self.params, serializer);
+    sse_encode_bool(self.functions, serializer);
+    sse_encode_bool(self.analyzers, serializer);
+    sse_encode_table_config(self.tables, serializer);
+    sse_encode_bool(self.versions, serializer);
+    sse_encode_bool(self.records, serializer);
+    sse_encode_bool(self.sequences, serializer);
+  }
+
+  @protected
   void sse_encode_db_notification(
       DBNotification self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
@@ -1067,6 +1225,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_method(Method self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
   void sse_encode_opt_box_autoadd_bool(bool? self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -1084,6 +1248,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_bool(self != null, serializer);
     if (self != null) {
       sse_encode_box_autoadd_capabilities_config(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_config(
+      Config? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_config(self, serializer);
     }
   }
 
@@ -1131,17 +1306,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_opt_list_prim_u_8_strict(
-      Uint8List? self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    sse_encode_bool(self != null, serializer);
-    if (self != null) {
-      sse_encode_list_prim_u_8_strict(self, serializer);
-    }
-  }
-
-  @protected
   void sse_encode_options(Options self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_opt_box_autoadd_bool(self.strict, serializer);
@@ -1149,6 +1313,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_opt_box_autoadd_u_8(self.transactionTimeout, serializer);
     sse_encode_opt_box_autoadd_capabilities_config(
         self.capabilities, serializer);
+  }
+
+  @protected
+  void sse_encode_table_config(TableConfig self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    switch (self) {
+      case TableConfig_All():
+        sse_encode_i_32(0, serializer);
+      case TableConfig_None():
+        sse_encode_i_32(1, serializer);
+      case TableConfig_Some(field0: final field0):
+        sse_encode_i_32(2, serializer);
+        sse_encode_list_String(field0, serializer);
+    }
   }
 
   @protected
@@ -1220,10 +1398,12 @@ class SurrealFlutterEngineImpl extends RustOpaque
         .instance.api.rust_arc_decrement_strong_count_SurrealFlutterEnginePtr,
   );
 
-  Future<Uint8List> execute({required List<int> data}) => RustLib.instance.api
-      .crateApiEngineSurrealFlutterEngineExecute(that: this, data: data);
+  Future<Uint8List> execute(
+          {required Method method, required List<int> params, int? version}) =>
+      RustLib.instance.api.crateApiEngineSurrealFlutterEngineExecute(
+          that: this, method: method, params: params, version: version);
 
-  Future<String> export_({Uint8List? config}) => RustLib.instance.api
+  Future<String> export_({Config? config}) => RustLib.instance.api
       .crateApiEngineSurrealFlutterEngineExport(that: this, config: config);
 
   Future<void> import_({required String input}) => RustLib.instance.api

@@ -38,7 +38,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.11.1";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1929108195;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 835786501;
 
 // Section: executor
 
@@ -112,7 +112,9 @@ fn wire__crate__api__engine__SurrealFlutterEngine_execute_impl(
             let api_that = <RustOpaqueMoi<
                 flutter_rust_bridge::for_generated::RustAutoOpaqueInner<SurrealFlutterEngine>,
             >>::sse_decode(&mut deserializer);
-            let api_data = <Vec<u8>>::sse_decode(&mut deserializer);
+            let api_method = <crate::api::engine::Method>::sse_decode(&mut deserializer);
+            let api_params = <Vec<u8>>::sse_decode(&mut deserializer);
+            let api_version = <Option<u8>>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| async move {
                 transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
@@ -136,7 +138,9 @@ fn wire__crate__api__engine__SurrealFlutterEngine_execute_impl(
                         let api_that_guard = api_that_guard.unwrap();
                         let output_ok = crate::api::engine::SurrealFlutterEngine::execute(
                             &*api_that_guard,
-                            api_data,
+                            api_method,
+                            api_params,
+                            api_version,
                         )
                         .await?;
                         Ok(output_ok)
@@ -172,7 +176,7 @@ fn wire__crate__api__engine__SurrealFlutterEngine_export_impl(
             let api_that = <RustOpaqueMoi<
                 flutter_rust_bridge::for_generated::RustAutoOpaqueInner<SurrealFlutterEngine>,
             >>::sse_decode(&mut deserializer);
-            let api_config = <Option<Vec<u8>>>::sse_decode(&mut deserializer);
+            let api_config = <Option<crate::api::engine::Config>>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| async move {
                 transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
@@ -364,6 +368,65 @@ fn wire__crate__api__engine__SurrealFlutterEngine_version_impl(
         },
     )
 }
+fn wire__crate__api__init_app_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "init_app",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Result::<_, ()>::Ok({
+                        crate::api::init_app();
+                    })?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+
+// Section: static_checks
+
+#[allow(clippy::unnecessary_literal_unwrap)]
+const _: fn() = || {
+    {
+        let Config = None::<crate::api::engine::Config>.unwrap();
+        let _: bool = Config.users;
+        let _: bool = Config.accesses;
+        let _: bool = Config.params;
+        let _: bool = Config.functions;
+        let _: bool = Config.analyzers;
+        let _: crate::api::engine::TableConfig = Config.tables;
+        let _: bool = Config.versions;
+        let _: bool = Config.records;
+        let _: bool = Config.sequences;
+    }
+    match None::<crate::api::engine::TableConfig>.unwrap() {
+        crate::api::engine::TableConfig::All => {}
+        crate::api::engine::TableConfig::None => {}
+        crate::api::engine::TableConfig::Some(field0) => {
+            let _: Vec<String> = field0;
+        }
+    }
+};
 
 // Section: related_funcs
 
@@ -480,6 +543,32 @@ impl SseDecode for crate::api::options::CapabilitiesConfig {
     }
 }
 
+impl SseDecode for crate::api::engine::Config {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_users = <bool>::sse_decode(deserializer);
+        let mut var_accesses = <bool>::sse_decode(deserializer);
+        let mut var_params = <bool>::sse_decode(deserializer);
+        let mut var_functions = <bool>::sse_decode(deserializer);
+        let mut var_analyzers = <bool>::sse_decode(deserializer);
+        let mut var_tables = <crate::api::engine::TableConfig>::sse_decode(deserializer);
+        let mut var_versions = <bool>::sse_decode(deserializer);
+        let mut var_records = <bool>::sse_decode(deserializer);
+        let mut var_sequences = <bool>::sse_decode(deserializer);
+        return crate::api::engine::Config {
+            users: var_users,
+            accesses: var_accesses,
+            params: var_params,
+            functions: var_functions,
+            analyzers: var_analyzers,
+            tables: var_tables,
+            versions: var_versions,
+            records: var_records,
+            sequences: var_sequences,
+        };
+    }
+}
+
 impl SseDecode for crate::api::engine::DBNotification {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -527,6 +616,42 @@ impl SseDecode for Vec<u8> {
     }
 }
 
+impl SseDecode for crate::api::engine::Method {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::engine::Method::Unknown,
+            1 => crate::api::engine::Method::Ping,
+            2 => crate::api::engine::Method::Info,
+            3 => crate::api::engine::Method::Use,
+            4 => crate::api::engine::Method::Signup,
+            5 => crate::api::engine::Method::Signin,
+            6 => crate::api::engine::Method::Authenticate,
+            7 => crate::api::engine::Method::Invalidate,
+            8 => crate::api::engine::Method::Reset,
+            9 => crate::api::engine::Method::Kill,
+            10 => crate::api::engine::Method::Live,
+            11 => crate::api::engine::Method::Set,
+            12 => crate::api::engine::Method::Unset,
+            13 => crate::api::engine::Method::Select,
+            14 => crate::api::engine::Method::Insert,
+            15 => crate::api::engine::Method::Create,
+            16 => crate::api::engine::Method::Upsert,
+            17 => crate::api::engine::Method::Update,
+            18 => crate::api::engine::Method::Merge,
+            19 => crate::api::engine::Method::Patch,
+            20 => crate::api::engine::Method::Delete,
+            21 => crate::api::engine::Method::Version,
+            22 => crate::api::engine::Method::Query,
+            23 => crate::api::engine::Method::Relate,
+            24 => crate::api::engine::Method::Run,
+            25 => crate::api::engine::Method::InsertRelation,
+            _ => unreachable!("Invalid variant for Method: {}", inner),
+        };
+    }
+}
+
 impl SseDecode for Option<bool> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -545,6 +670,17 @@ impl SseDecode for Option<crate::api::options::CapabilitiesConfig> {
             return Some(<crate::api::options::CapabilitiesConfig>::sse_decode(
                 deserializer,
             ));
+        } else {
+            return None;
+        }
+    }
+}
+
+impl SseDecode for Option<crate::api::engine::Config> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<crate::api::engine::Config>::sse_decode(deserializer));
         } else {
             return None;
         }
@@ -597,17 +733,6 @@ impl SseDecode for Option<u8> {
     }
 }
 
-impl SseDecode for Option<Vec<u8>> {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        if (<bool>::sse_decode(deserializer)) {
-            return Some(<Vec<u8>>::sse_decode(deserializer));
-        } else {
-            return None;
-        }
-    }
-}
-
 impl SseDecode for crate::api::options::Options {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -622,6 +747,28 @@ impl SseDecode for crate::api::options::Options {
             transaction_timeout: var_transactionTimeout,
             capabilities: var_capabilities,
         };
+    }
+}
+
+impl SseDecode for crate::api::engine::TableConfig {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut tag_ = <i32>::sse_decode(deserializer);
+        match tag_ {
+            0 => {
+                return crate::api::engine::TableConfig::All;
+            }
+            1 => {
+                return crate::api::engine::TableConfig::None;
+            }
+            2 => {
+                let mut var_field0 = <Vec<String>>::sse_decode(deserializer);
+                return crate::api::engine::TableConfig::Some(var_field0);
+            }
+            _ => {
+                unimplemented!("");
+            }
+        }
     }
 }
 
@@ -739,6 +886,7 @@ fn pde_ffi_dispatcher_primary_impl(
             rust_vec_len,
             data_len,
         ),
+        7 => wire__crate__api__init_app_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -833,6 +981,34 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::options::CapabilitiesConfig>
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::engine::Config> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.users.into_into_dart().into_dart(),
+            self.0.accesses.into_into_dart().into_dart(),
+            self.0.params.into_into_dart().into_dart(),
+            self.0.functions.into_into_dart().into_dart(),
+            self.0.analyzers.into_into_dart().into_dart(),
+            self.0.tables.into_into_dart().into_dart(),
+            self.0.versions.into_into_dart().into_dart(),
+            self.0.records.into_into_dart().into_dart(),
+            self.0.sequences.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for FrbWrapper<crate::api::engine::Config>
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::engine::Config>>
+    for crate::api::engine::Config
+{
+    fn into_into_dart(self) -> FrbWrapper<crate::api::engine::Config> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::api::engine::DBNotification {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
@@ -856,6 +1032,51 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::engine::DBNotification>
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::engine::Method> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self.0 {
+            crate::api::engine::Method::Unknown => 0.into_dart(),
+            crate::api::engine::Method::Ping => 1.into_dart(),
+            crate::api::engine::Method::Info => 2.into_dart(),
+            crate::api::engine::Method::Use => 3.into_dart(),
+            crate::api::engine::Method::Signup => 4.into_dart(),
+            crate::api::engine::Method::Signin => 5.into_dart(),
+            crate::api::engine::Method::Authenticate => 6.into_dart(),
+            crate::api::engine::Method::Invalidate => 7.into_dart(),
+            crate::api::engine::Method::Reset => 8.into_dart(),
+            crate::api::engine::Method::Kill => 9.into_dart(),
+            crate::api::engine::Method::Live => 10.into_dart(),
+            crate::api::engine::Method::Set => 11.into_dart(),
+            crate::api::engine::Method::Unset => 12.into_dart(),
+            crate::api::engine::Method::Select => 13.into_dart(),
+            crate::api::engine::Method::Insert => 14.into_dart(),
+            crate::api::engine::Method::Create => 15.into_dart(),
+            crate::api::engine::Method::Upsert => 16.into_dart(),
+            crate::api::engine::Method::Update => 17.into_dart(),
+            crate::api::engine::Method::Merge => 18.into_dart(),
+            crate::api::engine::Method::Patch => 19.into_dart(),
+            crate::api::engine::Method::Delete => 20.into_dart(),
+            crate::api::engine::Method::Version => 21.into_dart(),
+            crate::api::engine::Method::Query => 22.into_dart(),
+            crate::api::engine::Method::Relate => 23.into_dart(),
+            crate::api::engine::Method::Run => 24.into_dart(),
+            crate::api::engine::Method::InsertRelation => 25.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for FrbWrapper<crate::api::engine::Method>
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::engine::Method>>
+    for crate::api::engine::Method
+{
+    fn into_into_dart(self) -> FrbWrapper<crate::api::engine::Method> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::api::options::Options {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
@@ -873,6 +1094,32 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::options::Options>
 {
     fn into_into_dart(self) -> crate::api::options::Options {
         self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::engine::TableConfig> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self.0 {
+            crate::api::engine::TableConfig::All => [0.into_dart()].into_dart(),
+            crate::api::engine::TableConfig::None => [1.into_dart()].into_dart(),
+            crate::api::engine::TableConfig::Some(field0) => {
+                [2.into_dart(), field0.into_into_dart().into_dart()].into_dart()
+            }
+            _ => {
+                unimplemented!("");
+            }
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for FrbWrapper<crate::api::engine::TableConfig>
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::engine::TableConfig>>
+    for crate::api::engine::TableConfig
+{
+    fn into_into_dart(self) -> FrbWrapper<crate::api::engine::TableConfig> {
+        self.into()
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
@@ -1040,6 +1287,21 @@ impl SseEncode for crate::api::options::CapabilitiesConfig {
     }
 }
 
+impl SseEncode for crate::api::engine::Config {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.users, serializer);
+        <bool>::sse_encode(self.accesses, serializer);
+        <bool>::sse_encode(self.params, serializer);
+        <bool>::sse_encode(self.functions, serializer);
+        <bool>::sse_encode(self.analyzers, serializer);
+        <crate::api::engine::TableConfig>::sse_encode(self.tables, serializer);
+        <bool>::sse_encode(self.versions, serializer);
+        <bool>::sse_encode(self.records, serializer);
+        <bool>::sse_encode(self.sequences, serializer);
+    }
+}
+
 impl SseEncode for crate::api::engine::DBNotification {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -1077,6 +1339,46 @@ impl SseEncode for Vec<u8> {
     }
 }
 
+impl SseEncode for crate::api::engine::Method {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::engine::Method::Unknown => 0,
+                crate::api::engine::Method::Ping => 1,
+                crate::api::engine::Method::Info => 2,
+                crate::api::engine::Method::Use => 3,
+                crate::api::engine::Method::Signup => 4,
+                crate::api::engine::Method::Signin => 5,
+                crate::api::engine::Method::Authenticate => 6,
+                crate::api::engine::Method::Invalidate => 7,
+                crate::api::engine::Method::Reset => 8,
+                crate::api::engine::Method::Kill => 9,
+                crate::api::engine::Method::Live => 10,
+                crate::api::engine::Method::Set => 11,
+                crate::api::engine::Method::Unset => 12,
+                crate::api::engine::Method::Select => 13,
+                crate::api::engine::Method::Insert => 14,
+                crate::api::engine::Method::Create => 15,
+                crate::api::engine::Method::Upsert => 16,
+                crate::api::engine::Method::Update => 17,
+                crate::api::engine::Method::Merge => 18,
+                crate::api::engine::Method::Patch => 19,
+                crate::api::engine::Method::Delete => 20,
+                crate::api::engine::Method::Version => 21,
+                crate::api::engine::Method::Query => 22,
+                crate::api::engine::Method::Relate => 23,
+                crate::api::engine::Method::Run => 24,
+                crate::api::engine::Method::InsertRelation => 25,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
 impl SseEncode for Option<bool> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -1093,6 +1395,16 @@ impl SseEncode for Option<crate::api::options::CapabilitiesConfig> {
         <bool>::sse_encode(self.is_some(), serializer);
         if let Some(value) = self {
             <crate::api::options::CapabilitiesConfig>::sse_encode(value, serializer);
+        }
+    }
+}
+
+impl SseEncode for Option<crate::api::engine::Config> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <crate::api::engine::Config>::sse_encode(value, serializer);
         }
     }
 }
@@ -1137,16 +1449,6 @@ impl SseEncode for Option<u8> {
     }
 }
 
-impl SseEncode for Option<Vec<u8>> {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <bool>::sse_encode(self.is_some(), serializer);
-        if let Some(value) = self {
-            <Vec<u8>>::sse_encode(value, serializer);
-        }
-    }
-}
-
 impl SseEncode for crate::api::options::Options {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -1157,6 +1459,27 @@ impl SseEncode for crate::api::options::Options {
             self.capabilities,
             serializer,
         );
+    }
+}
+
+impl SseEncode for crate::api::engine::TableConfig {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        match self {
+            crate::api::engine::TableConfig::All => {
+                <i32>::sse_encode(0, serializer);
+            }
+            crate::api::engine::TableConfig::None => {
+                <i32>::sse_encode(1, serializer);
+            }
+            crate::api::engine::TableConfig::Some(field0) => {
+                <i32>::sse_encode(2, serializer);
+                <Vec<String>>::sse_encode(field0, serializer);
+            }
+            _ => {
+                unimplemented!("");
+            }
+        }
     }
 }
 

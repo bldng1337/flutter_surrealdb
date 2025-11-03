@@ -66,6 +66,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   CapabilitiesConfig dco_decode_box_autoadd_capabilities_config(dynamic raw);
 
   @protected
+  Config dco_decode_box_autoadd_config(dynamic raw);
+
+  @protected
   Options dco_decode_box_autoadd_options(dynamic raw);
 
   @protected
@@ -79,6 +82,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   CapabilitiesConfig dco_decode_capabilities_config(dynamic raw);
+
+  @protected
+  Config dco_decode_config(dynamic raw);
 
   @protected
   DBNotification dco_decode_db_notification(dynamic raw);
@@ -96,11 +102,17 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
 
   @protected
+  Method dco_decode_method(dynamic raw);
+
+  @protected
   bool? dco_decode_opt_box_autoadd_bool(dynamic raw);
 
   @protected
   CapabilitiesConfig? dco_decode_opt_box_autoadd_capabilities_config(
       dynamic raw);
+
+  @protected
+  Config? dco_decode_opt_box_autoadd_config(dynamic raw);
 
   @protected
   Options? dco_decode_opt_box_autoadd_options(dynamic raw);
@@ -115,10 +127,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int? dco_decode_opt_box_autoadd_u_8(dynamic raw);
 
   @protected
-  Uint8List? dco_decode_opt_list_prim_u_8_strict(dynamic raw);
+  Options dco_decode_options(dynamic raw);
 
   @protected
-  Options dco_decode_options(dynamic raw);
+  TableConfig dco_decode_table_config(dynamic raw);
 
   @protected
   Targets dco_decode_targets(dynamic raw);
@@ -177,6 +189,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       SseDeserializer deserializer);
 
   @protected
+  Config sse_decode_box_autoadd_config(SseDeserializer deserializer);
+
+  @protected
   Options sse_decode_box_autoadd_options(SseDeserializer deserializer);
 
   @protected
@@ -194,6 +209,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       SseDeserializer deserializer);
 
   @protected
+  Config sse_decode_config(SseDeserializer deserializer);
+
+  @protected
   DBNotification sse_decode_db_notification(SseDeserializer deserializer);
 
   @protected
@@ -209,11 +227,17 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
 
   @protected
+  Method sse_decode_method(SseDeserializer deserializer);
+
+  @protected
   bool? sse_decode_opt_box_autoadd_bool(SseDeserializer deserializer);
 
   @protected
   CapabilitiesConfig? sse_decode_opt_box_autoadd_capabilities_config(
       SseDeserializer deserializer);
+
+  @protected
+  Config? sse_decode_opt_box_autoadd_config(SseDeserializer deserializer);
 
   @protected
   Options? sse_decode_opt_box_autoadd_options(SseDeserializer deserializer);
@@ -229,10 +253,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int? sse_decode_opt_box_autoadd_u_8(SseDeserializer deserializer);
 
   @protected
-  Uint8List? sse_decode_opt_list_prim_u_8_strict(SseDeserializer deserializer);
+  Options sse_decode_options(SseDeserializer deserializer);
 
   @protected
-  Options sse_decode_options(SseDeserializer deserializer);
+  TableConfig sse_decode_table_config(SseDeserializer deserializer);
 
   @protected
   Targets sse_decode_targets(SseDeserializer deserializer);
@@ -292,6 +316,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       CapabilitiesConfig self, SseSerializer serializer);
 
   @protected
+  void sse_encode_box_autoadd_config(Config self, SseSerializer serializer);
+
+  @protected
   void sse_encode_box_autoadd_options(Options self, SseSerializer serializer);
 
   @protected
@@ -307,6 +334,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_capabilities_config(
       CapabilitiesConfig self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_config(Config self, SseSerializer serializer);
 
   @protected
   void sse_encode_db_notification(
@@ -326,11 +356,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       Uint8List self, SseSerializer serializer);
 
   @protected
+  void sse_encode_method(Method self, SseSerializer serializer);
+
+  @protected
   void sse_encode_opt_box_autoadd_bool(bool? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_box_autoadd_capabilities_config(
       CapabilitiesConfig? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_config(
+      Config? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_box_autoadd_options(
@@ -348,11 +385,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_opt_box_autoadd_u_8(int? self, SseSerializer serializer);
 
   @protected
-  void sse_encode_opt_list_prim_u_8_strict(
-      Uint8List? self, SseSerializer serializer);
+  void sse_encode_options(Options self, SseSerializer serializer);
 
   @protected
-  void sse_encode_options(Options self, SseSerializer serializer);
+  void sse_encode_table_config(TableConfig self, SseSerializer serializer);
 
   @protected
   void sse_encode_targets(Targets self, SseSerializer serializer);

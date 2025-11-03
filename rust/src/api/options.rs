@@ -1,7 +1,7 @@
 use anyhow::{Error, Result};
 use serde::Deserialize;
 use std::collections::HashSet;
-use surrealdb::dbs::capabilities;
+use surrealdb_core::dbs::capabilities;
 
 #[derive(Deserialize)]
 pub struct Options {
