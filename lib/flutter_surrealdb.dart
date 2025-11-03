@@ -553,7 +553,7 @@ class DBTable implements Resource {
 
 class DBRecord implements Resource {
   final String tb;
-  final String id;
+  final dynamic id;
   const DBRecord(this.tb, this.id);
 
   DBTable get table => DBTable(tb);

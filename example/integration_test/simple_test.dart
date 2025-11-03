@@ -38,6 +38,27 @@ void main() {
     db.dispose();
   });
 
+  test('upsert with complex id', () async {
+    final db = await SurrealDB.connect("mem://");
+    await db.use(db: "test", ns: "test");
+    final complexId = [1, "b"];
+    final record = DBRecord("test", complexId);
+    var data = {
+      "hello": "world",
+      "num": 1,
+      "bool": true,
+      "float": 1.0,
+      "string": "test",
+      "array": ["test1", "test2"],
+      "object": {"test": "test"}
+    };
+    await db.upsert(record, data);
+    final result = await db.select(record);
+    data["id"] = result["id"];
+    expect(result, data);
+    db.dispose();
+  });
+
   test('select type', () async {
     final db = await SurrealDB.connect("mem://");
     await db.use(db: "test", ns: "test");

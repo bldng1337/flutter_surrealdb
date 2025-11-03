@@ -34,7 +34,7 @@ CborValue encodeDBData(dynamic data) {
     final int a => CborInt(BigInt.from(a)),
     final DBTable a => CborString(a.tb, tags: [7]),
     final DBRecord a =>
-      CborList([CborString(a.tb), CborString(a.id)], tags: [8]),
+      CborList([CborString(a.tb), encodeDBData(a.id)], tags: [8]),
     final DateTime a => encodeDateTime(a),
     final Duration a => CborList([
         CborInt(BigInt.from(a.inSeconds)),
