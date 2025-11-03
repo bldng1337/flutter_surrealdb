@@ -8,7 +8,7 @@ import 'package:flutter_surrealdb/flutter_surrealdb.dart';
 import 'package:uuid/uuid_value.dart';
 import 'src/rust/api/engine.dart';
 export 'utils.dart';
-export 'src/rust/api/engine.dart' show SurrealFlutterEngine, Action;
+export 'src/rust/api/engine.dart' show SurrealFlutterEngine, Action, Config;
 export 'src/rust/api/options.dart' show Options;
 export 'src/rust/frb_generated.dart' show RustLib;
 
