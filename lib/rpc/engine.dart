@@ -1,52 +1,81 @@
-library flutter_surrealdb;
-
-import 'dart:async';
-import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_io.dart';
+import 'package:flutter_surrealdb/data/notification.dart';
 import 'package:flutter_surrealdb/flutter_surrealdb.dart';
-import 'package:flutter_surrealdb/rpc/embedded.dart';
-import 'package:flutter_surrealdb/rpc/engine.dart';
-
+import 'package:flutter_surrealdb/src/rust/api/engine.dart';
 import 'package:uuid/uuid_value.dart';
 
-import 'src/rust/frb_generated.dart';
-export 'src/rust/api/engine.dart' show SurrealFlutterEngine, Action, Config;
-export 'src/rust/api/options.dart' show Options;
-export 'data/ressource.dart';
-export 'data/notification.dart' show Notification;
-export 'rpc/engine.dart' show DataExpr, InsertDataExpr, Output;
-export 'data/options.dart';
-export 'error/query.dart';
+enum Output {
+  none,
+  null_,
+  diff,
+  before,
+  after,
+}
 
-class SurrealDB {
-  final RPCEngine _engine;
-
-  const SurrealDB(this._engine);
-
-  static Future<void> ensureInitialized({
-    RustLibApi? api,
-    BaseHandler? handler,
-    ExternalLibrary? externalLibrary,
-    bool forceSameCodegenVersion = true,
-  }) async {
-    await RustLib.init(
-      api: api,
-      handler: handler,
-      externalLibrary: externalLibrary,
-      forceSameCodegenVersion: forceSameCodegenVersion,
-    );
+extension OutputValue on Output {
+  String get value {
+    switch (this) {
+      case Output.none:
+        return 'none';
+      case Output.null_:
+        return 'null';
+      case Output.diff:
+        return 'diff';
+      case Output.before:
+        return 'before';
+      case Output.after:
+        return 'after';
+    }
   }
+}
 
-  /// Connects to a SurrealDB instance.
-  ///
-  /// Parameters:
-  /// - [endpoint]: The connection endpoint.
-  /// - [opts]: Optional connection options.
-  /// Returns: A SurrealDB instance.
-  static Future<SurrealDB> connect(String endpoint, {Options? opts}) async {
-    final engine = RustEngine();
-    await engine.connect(endpoint: endpoint, opts: opts);
-    return SurrealDB(engine);
+/// Data expression options for `update` operations.
+enum DataExpr {
+  content,
+  merge,
+  replace,
+  patch,
+}
+
+extension DataExprValue on DataExpr {
+  String get value {
+    switch (this) {
+      case DataExpr.content:
+        return 'content';
+      case DataExpr.merge:
+        return 'merge';
+      case DataExpr.replace:
+        return 'replace';
+      case DataExpr.patch:
+        return 'patch';
+    }
   }
+}
+
+/// Data expression options for `insert` operations.
+enum InsertDataExpr {
+  content,
+  single,
+}
+
+extension InsertDataExprValue on InsertDataExpr {
+  String get value {
+    switch (this) {
+      case InsertDataExpr.content:
+        return 'content';
+      case InsertDataExpr.single:
+        return 'single';
+    }
+  }
+}
+
+mixin RPCEngine {
+  Future<dynamic> execute(Method method, List<dynamic> params);
+  Future<String> engineVersion();
+  Future<String> export(Config? options);
+  Future<void> import(String input);
+  Future<void> dispose();
+  Future<void> connect({required String endpoint, Options? opts});
+  Stream<Notification> get notifications;
 
   /// Specifies or unsets the namespace and/or database for the current connection.
   ///
@@ -56,7 +85,7 @@ class SurrealDB {
   /// - [ns]: The namespace to set. Pass null to unset.
   /// - [db]: The database to set. Pass null to unset.
   Future<void> use({String? db, String? ns}) async {
-    await _engine.use(ns: ns, db: db);
+    await execute(Method.use, [ns, db]);
   }
 
   /// Defines a session variable on the current connection.
@@ -67,7 +96,7 @@ class SurrealDB {
   /// - [key]: The name of the variable (without $).
   /// - [value]: The value to assign.
   Future<void> set(String key, dynamic value) async {
-    await _engine.set(key, value);
+    await execute(Method.set_, [key, value]);
   }
 
   /// Removes a session variable from the current connection.
@@ -77,7 +106,7 @@ class SurrealDB {
   /// Parameters:
   /// - [name]: The name of the variable to remove.
   Future<void> unset(String name) async {
-    await _engine.unset(name);
+    await execute(Method.unset, [name]);
   }
 
   // QUERY
@@ -89,24 +118,9 @@ class SurrealDB {
   /// Parameters:
   /// - [query]: The SurrealQL query string.
   /// - [vars]: Optional variables for the query.
-  /// - [throwOnError]: If true, throw on error, otherwise return the result with an ["error"] field in case of an error.
   /// Returns: List of results.
-  Future<dynamic> query(String query,
-      {Map<String, dynamic>? vars, bool throwOnError = true}) async {
-    final res = await _engine.query(query, vars: vars);
-    if (throwOnError == false) {
-      return res;
-    }
-    if (res == null || res is! Iterable) {
-      throw StateError(
-          "Invalid response from query: expected an Iterable got ${res.runtimeType}");
-    }
-    for (final e in res) {
-      if (e["error"] != null) {
-        throw QueryError(e["error"]);
-      }
-    }
-    return res.map((e) => e["result"]).toList();
+  Future<dynamic> query(String query, {Map<String, dynamic>? vars}) async {
+    return await execute(Method.query, [query, vars]);
   }
 
   /// Selects either all records in a table or a single record.
@@ -117,7 +131,19 @@ class SurrealDB {
   /// - [thing]: The Resource (table or record) to select.
   /// Returns: The selected data.
   Future<dynamic> select(Resource thing) async {
-    return await _engine.select(thing);
+    return await execute(Method.select, [thing]);
+  }
+
+  /// Initiates a live query for a specified table.
+  ///
+  /// This corresponds to the 'live' RPC method.
+  ///
+  /// Parameters:
+  /// - [table]: The table to initiate the live query for.
+  /// - [diff]: If true, notifications contain JSON patches instead of full records.
+  /// Returns: A stream of notifications.
+  Future<UuidValue> live(DBTable table, {bool? diff}) async {
+    return await execute(Method.live, [table, if (diff != null) diff]);
   }
 
   /// Kills an active live query.
@@ -127,37 +153,7 @@ class SurrealDB {
   /// Parameters:
   /// - [id]: The UUID of the live query to kill.
   Future<void> kill(UuidValue id) async {
-    await _engine.kill(id);
-  }
-
-  Stream<Notification> live(DBTable table, {bool? diff}) async* {
-    yield* liveOf(await _engine.live(table, diff: diff));
-  }
-
-  Stream<Notification> liveOf(
-    UuidValue id, {
-    Future<void> Function()? onKill,
-    bool shouldKillOnCancel = true,
-  }) {
-    late final StreamController<Notification> controller;
-    late final StreamSubscription<Notification> subscription;
-    controller = StreamController<Notification>(
-      onCancel: () async {
-        if (shouldKillOnCancel) {
-          await _engine.kill(id);
-        }
-        await subscription.cancel();
-        await onKill?.call();
-      },
-      onListen: () {
-        subscription = _engine.notifications.listen((event) {
-          if (event.id == id) {
-            controller.add(event);
-          }
-        });
-      },
-    );
-    return controller.stream;
+    await execute(Method.kill, [id]);
   }
 
   /// Creates a record with a random or specified ID.
@@ -177,27 +173,14 @@ class SurrealDB {
       Output? output,
       Duration? timeout,
       DateTime? version}) async {
-    return await _engine.create(res, data,
-        only: only, output: output, timeout: timeout, version: version);
-  }
-
-  // EXPORT / IMPORT
-
-  /// Exports the database data.
-  ///
-  /// Parameters:
-  /// - [options]: Optional configuration for the export.
-  /// Returns: The exported data as a string.
-  Future<String> export({Config? options}) async {
-    return await _engine.export(options);
-  }
-
-  /// Imports data into the database.
-  ///
-  /// Parameters:
-  /// - [data]: The data to import.
-  Future<void> import({required String data}) async {
-    await _engine.import(data);
+    final params = {
+      if (only != null) "only": only,
+      if (output != null) "output": output.value,
+      if (timeout != null) "timeout": timeout,
+      if (version != null) "version": version,
+    };
+    return await execute(
+        Method.create, [res, data, if (params.isNotEmpty) params]);
   }
 
   // Mutation
@@ -226,13 +209,19 @@ class SurrealDB {
     Duration? timeout,
     Map<String, dynamic>? vars,
   }) async {
-    return await _engine.update(thing, data,
-        dataExpr: dataExpr,
-        only: only,
-        condition: condition,
-        output: output,
-        timeout: timeout,
-        vars: vars);
+    final params = {
+      if (dataExpr != null) "data_expr": dataExpr.value,
+      if (only != null) "only": only,
+      if (condition != null) "cond": condition,
+      if (output != null) "output": output.value,
+      if (timeout != null) "timeout": timeout,
+      if (vars != null) "vars": vars,
+    };
+    return await execute(Method.update, [
+      thing,
+      data,
+      if (params.isNotEmpty) params,
+    ]);
   }
 
   /// Replaces either all records in a table or a single record with specified data.
@@ -244,7 +233,7 @@ class SurrealDB {
   /// - [data]: The content of the record.
   /// Returns: The upserted data.
   Future<dynamic> upsert(Resource thing, dynamic data) async {
-    return await _engine.upsert(thing, data);
+    return await execute(Method.upsert, [thing, data]);
   }
 
   /// Deletes either all records in a table or a single record.
@@ -259,8 +248,16 @@ class SurrealDB {
   /// Returns: The deleted data.
   Future<dynamic> delete(Resource thing,
       {bool? only, Output? output, Duration? timeout}) async {
-    return await _engine.delete(thing,
-        only: only, output: output, timeout: timeout);
+    final args = {
+      if (only != null) "only": only,
+      if (output != null) "output": output.value,
+      if (timeout != null) "timeout": timeout,
+    };
+
+    return await execute(Method.delete, [
+      thing,
+      if (args.isNotEmpty) args,
+    ]);
   }
 
   /// Inserts one or multiple records in a table.
@@ -287,13 +284,19 @@ class SurrealDB {
     DateTime? version,
     Map<String, dynamic>? vars,
   }) async {
-    return await _engine.insert(thing, data,
-        dataExpr: dataExpr,
-        relation: relation,
-        output: output,
-        timeout: timeout,
-        version: version,
-        vars: vars);
+    final vals = {
+      if (dataExpr != null) "data_expr": dataExpr.value,
+      if (relation != null) "relation": relation,
+      if (output != null) "output": output.value,
+      if (timeout != null) "timeout": timeout,
+      if (version != null) "version": version,
+      if (vars != null) "vars": vars,
+    };
+    return await execute(Method.insert, [
+      thing,
+      data,
+      if (vals.isNotEmpty) vals,
+    ]);
   }
 
   // AUTH
@@ -313,8 +316,9 @@ class SurrealDB {
       required String db,
       required String access,
       required dynamic variables}) async {
-    return await _engine.signup(
-        ns: ns, db: db, access: access, variables: variables);
+    return await execute(Method.signup, [
+      {"NS": ns, "DB": db, "AC": access, ...variables}
+    ]);
   }
 
   /// Signs in as a root, NS, DB or record user.
@@ -336,20 +340,23 @@ class SurrealDB {
       String? password,
       String? access,
       required dynamic variables}) async {
-    return await _engine.signin(
-        ns: ns,
-        db: db,
-        username: username,
-        password: password,
-        access: access,
-        variables: variables);
+    return await execute(Method.signin, [
+      {
+        if (ns != null) "NS": ns,
+        if (db != null) "DB": db,
+        if (username != null) "user": username,
+        if (password != null) "pass": password,
+        if (access != null) "AC": access,
+        ...variables
+      }
+    ]);
   }
 
   /// Invalidates the user's session for the current connection.
   ///
   /// This corresponds to the 'invalidate' RPC method.
   Future<void> invalidate() async {
-    await _engine.invalidate();
+    await execute(Method.invalidate, []);
   }
 
   /// Authenticates a user against SurrealDB with a token.
@@ -359,7 +366,7 @@ class SurrealDB {
   /// Parameters:
   /// - [token]: The authentication token.
   Future<void> authenticate(String token) async {
-    await _engine.authenticate(token);
+    await execute(Method.authenticate, [token]);
   }
 
   /// Returns the record of an authenticated record user.
@@ -368,7 +375,7 @@ class SurrealDB {
   ///
   /// Returns: The user info.
   Future<dynamic> info() async {
-    return await _engine.info();
+    return await execute(Method.info, []);
   }
 
   //OTHER
@@ -384,7 +391,7 @@ class SurrealDB {
   /// Returns: The execution result.
   Future<dynamic> run(String function,
       {List<dynamic>? args, String? version}) async {
-    return await _engine.run(function, version: version, args: args);
+    return await execute(Method.run, [function, version, args]);
   }
 
   /// Returns version information about the database/server.
@@ -393,18 +400,6 @@ class SurrealDB {
   ///
   /// Returns: Version info.
   Future<dynamic> version() async {
-    return await _engine.version();
-  }
-
-  /// Returns the version of the Flutter engine.
-  ///
-  /// Returns: The engine version string.
-  Future<String> engineVersion() async {
-    return await SurrealFlutterEngine.version();
-  }
-
-  /// Disposes the SurrealDB instance and cleans up resources.
-  void dispose() {
-    _engine.dispose();
+    return await execute(Method.version, []);
   }
 }

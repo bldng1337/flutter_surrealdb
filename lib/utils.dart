@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:flutter_surrealdb/flutter_surrealdb.dart';
+import 'package:flutter_surrealdb/data/ressource.dart';
 import 'package:cbor/cbor.dart';
 import 'package:uuid/uuid.dart';
 

@@ -4,7 +4,7 @@ import 'package:benchmarking/benchmarking.dart';
 import 'package:flutter_surrealdb/flutter_surrealdb.dart';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:path_provider/path_provider.dart';
+import 'package:flutter_surrealdb/utils.dart';
 
 void runSerializeBenchmark(
     String name, int count, dynamic Function(int index) getdata) async {
@@ -138,7 +138,7 @@ void main() async {
             'name': 'name_$index',
             'data': List.generate(1000, (index) => Random().nextInt(100))
           });
-  await RustLib.init();
+  await SurrealDB.ensureInitialized();
   for (var backend in await getKVBackends()) {
     printHeader("KV ${backend.split("://")[0]}");
     final db = await SurrealDB.connect(backend);

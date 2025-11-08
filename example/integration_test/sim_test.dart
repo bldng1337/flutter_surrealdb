@@ -8,7 +8,7 @@ import 'package:glados/glados.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
-  setUpAll(() async => await RustLib.init());
+  setUpAll(() async => await SurrealDB.ensureInitialized());
   late SurrealDB db;
   setUp(() async {
     db = await SurrealDB.connect("mem://");

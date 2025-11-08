@@ -1,9 +1,6 @@
 // import 'dart:io';
 
 // import 'package:flutter/material.dart';
-import 'dart:convert';
-
-import 'package:flutter_surrealdb/flutter_surrealdb.dart';
 
 // Future<void> main() async {
 //   await RustLib.init();

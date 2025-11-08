@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:flutter_surrealdb/utils.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_surrealdb/flutter_surrealdb.dart';
@@ -9,7 +10,7 @@ import 'package:uuid/v4.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
-  setUpAll(() async => await RustLib.init());
+  setUpAll(() async => await SurrealDB.ensureInitialized());
   test('Construct a Database', () async {
     final db = await SurrealDB.connect("mem://");
     db.dispose();
