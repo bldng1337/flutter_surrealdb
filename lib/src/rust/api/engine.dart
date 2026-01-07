@@ -15,21 +15,27 @@ part 'engine.freezed.dart';
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<SurrealFlutterEngine>>
 abstract class SurrealFlutterEngine implements RustOpaqueInterface {
+  Future<void> closeSession({required List<int> id});
+
   static Future<SurrealFlutterEngine> connect(
           {required String endpoint, Options? opts}) =>
       RustLib.instance.api.crateApiEngineSurrealFlutterEngineConnect(
           endpoint: endpoint, opts: opts);
 
+  Future<Uint8List> createSession();
+
   Future<Uint8List> execute(
-      {required Method method, required List<int> params, int? version});
+      {required Method method, required List<int> params, Uint8List? session});
 
-  Future<String> export_({Config? config});
+  Future<String> export_({Config? config, Uint8List? session});
 
-  Future<void> import_({required String input});
+  Future<Uint8List> forkSession({required List<int> id});
+
+  Future<void> import_({required String input, Uint8List? session});
 
   Stream<DBNotification> notifications();
 
-  static Future<String> version() =>
+  static String version() =>
       RustLib.instance.api.crateApiEngineSurrealFlutterEngineVersion();
 }
 

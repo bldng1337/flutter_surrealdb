@@ -6,14 +6,18 @@ import 'package:flutter_test/flutter_test.dart'
 import 'package:flutter_surrealdb/flutter_surrealdb.dart';
 import 'package:glados/glados.dart';
 
-void main() {
-  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
-  setUpAll(() async => await SurrealDB.ensureInitialized());
+void dotest() {
   late SurrealDB db;
+
   setUp(() async {
     db = await SurrealDB.connect("mem://");
     await db.use(db: "test", ns: "test");
   });
+
+  tearDown(() {
+    db.dispose();
+  });
+
   final utcdate = any.dateTime.map((value) => value.toUtc());
 
   final value = any.oneOf([
@@ -26,7 +30,6 @@ void main() {
     any.null_,
     any.combine2(
         any.lowercaseLetters, any.lowercaseLetters, (a, b) => DBRecord(a, b)),
-    // any.lowercaseLetters.map((value) => DBTable(value)),
     any.double.map(
         (value) => (value * math.pow(10.0, 5.0)).round() / math.pow(10.0, 5.0))
   ]);
@@ -62,4 +65,9 @@ void main() {
     final unpacked = (result as Map<String, dynamic>)['data'];
     expect(unpacked, a);
   }, timeout: const Timeout(Duration(seconds: 100)));
+}
+
+void main() {
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  dotest();
 }

@@ -13,7 +13,6 @@ export 'src/rust/api/engine.dart' show SurrealFlutterEngine, Action, Config;
 export 'src/rust/api/options.dart' show Options;
 export 'data/ressource.dart';
 export 'data/notification.dart' show Notification;
-export 'rpc/engine.dart' show DataExpr, InsertDataExpr, Output;
 export 'data/options.dart';
 export 'error/query.dart';
 
@@ -167,18 +166,9 @@ class SurrealDB {
   /// Parameters:
   /// - [res]: The thing (Table or Record ID) to create. Passing just a table will result in a randomly generated ID.
   /// - [data]: The content of the record.
-  /// - [only]: Optional, corresponds to [`ONLY`](https://surrealdb.com/docs/surrealql/statements/create#only) of the `CREATE` statement.
-  /// - [output]: Optional, corresponds to [`RETURN`](https://surrealdb.com/docs/surrealql/statements/create#return-values) of the `CREATE` statement.
-  /// - [timeout]: Optional, corresponds to [`TIMEOUT`](https://surrealdb.com/docs/surrealql/statements/create#timeout) of the `CREATE` statement.
-  /// - [version]: Optional, corresponds to [`VERSION`](https://surrealdb.com/docs/surrealql/statements/create#version) of the `CREATE` statement.
   /// Returns: The created record(s).
-  Future<dynamic> create(Resource res, dynamic data,
-      {bool? only,
-      Output? output,
-      Duration? timeout,
-      DateTime? version}) async {
-    return await _engine.create(res, data,
-        only: only, output: output, timeout: timeout, version: version);
+  Future<dynamic> create(Resource res, dynamic data) async {
+    return await _engine.create(res, data);
   }
 
   // EXPORT / IMPORT
@@ -209,30 +199,9 @@ class SurrealDB {
   /// Parameters:
   /// - [thing]: The thing (Table or Record ID) to update.
   /// - [data]: The content of the record.
-  /// - [dataExpr]: Optional, specifies how the data parameter is interpreted. content: corresponds to [`CONTENT`](https://surrealdb.com/docs/surrealql/statements/update#content-clause) of the `UPDATE` statement. merge: corresponds to [`MERGE`](https://surrealdb.com/docs/surrealql/statements/update#merge-clause) of the `UPDATE` statement. replace: corresponds to [`REPLACE`](https://surrealdb.com/docs/surrealql/statements/update#replace-clause) of the `UPDATE` statement. patch: corresponds to [`PATCH`](https://surrealdb.com/docs/surrealql/statements/update#patch-clause) of the `UPDATE` statement.
-  /// - [only]: Optional, corresponds to [`ONLY`](https://surrealdb.com/docs/surrealql/statements/update#using-the-only-clause) of the `UPDATE` statement.
-  /// - [condition]: Optional, corresponds to [`WHERE`](https://surrealdb.com/docs/surrealql/statements/update#conditional-update-with-where-clause) of the `UPDATE` statement.
-  /// - [output]: Optional, corresponds to [`RETURN`](https://surrealdb.com/docs/surrealql/statements/update#alter-the-return-value) of the `UPDATE` statement.
-  /// - [timeout]: Optional, corresponds to [`TIMEOUT`](https://surrealdb.com/docs/surrealql/statements/update#using-a-timeout) of the `UPDATE` statement.
-  /// - [vars]: Optional, [`Session Variables`](#session-variables).
   /// Returns: The updated data.
-  Future<dynamic> update(
-    Resource thing,
-    dynamic data, {
-    DataExpr? dataExpr,
-    bool? only,
-    String? condition,
-    Output? output,
-    Duration? timeout,
-    Map<String, dynamic>? vars,
-  }) async {
-    return await _engine.update(thing, data,
-        dataExpr: dataExpr,
-        only: only,
-        condition: condition,
-        output: output,
-        timeout: timeout,
-        vars: vars);
+  Future<dynamic> update(Resource thing, dynamic data) async {
+    return await _engine.update(thing, data);
   }
 
   /// Replaces either all records in a table or a single record with specified data.
@@ -253,14 +222,9 @@ class SurrealDB {
   ///
   /// Parameters:
   /// - [thing]: The thing (Table or Record ID) to delete.
-  /// - [only]: Optional, corresponds to [`ONLY`](https://surrealdb.com/docs/surrealql/statements/delete#using-the-only-clause) of the `DELETE` statement.
-  /// - [output]: Optional, by default, the delete method returns nothing. To change what is returned, we can use the output option, specifying either "none", "null", "diff", "before", "after".
-  /// - [timeout]: Optional, corresponds to [`TIMEOUT`](https://surrealdb.com/docs/surrealql/statements/delete#using-timeout-duration-records-based-on-conditions) of the `DELETE` statement.
   /// Returns: The deleted data.
-  Future<dynamic> delete(Resource thing,
-      {bool? only, Output? output, Duration? timeout}) async {
-    return await _engine.delete(thing,
-        only: only, output: output, timeout: timeout);
+  Future<dynamic> delete(Resource thing) async {
+    return await _engine.delete(thing);
   }
 
   /// Inserts one or multiple records in a table.
@@ -270,30 +234,9 @@ class SurrealDB {
   /// Parameters:
   /// - [thing]: The table to insert into.
   /// - [data]: The record(s) to insert.
-  /// - [dataExpr]: Optional, specifies how the data parameter is interpreted. content (default): The data parameter should be a single object representing one record, or an array of objects representing multiple records. single: The data parameter should be a object where keys represent field names and values are arrays of the same length. The records are constructed by combining the elements at the same index from each array.
-  /// - [relation]: Optional, a boolean indicating whether the inserted records are relations.
-  /// - [output]: Optional, corresponds to [`RETURN`](https://surrealdb.com/docs/surrealql/statements/insert#return-values) of the `INSERT` statement.
-  /// - [timeout]: Optional, a duration, stating how long the statement is run within the database before timing out.
-  /// - [version]: Optional, if you are using SurrealKV as the storage engine with versioning enabled, when creating a record you can specify a version for each record.
-  /// - [vars]: Optional, [`Session Variables`](#session-variables).
   /// Returns: List of inserted records.
-  Future<List<dynamic>> insert(
-    DBTable thing,
-    dynamic data, {
-    InsertDataExpr? dataExpr,
-    bool? relation,
-    Output? output,
-    Duration? timeout,
-    DateTime? version,
-    Map<String, dynamic>? vars,
-  }) async {
-    return await _engine.insert(thing, data,
-        dataExpr: dataExpr,
-        relation: relation,
-        output: output,
-        timeout: timeout,
-        version: version,
-        vars: vars);
+  Future<List<dynamic>> insert(DBTable thing, dynamic data) async {
+    return await _engine.insert(thing, data);
   }
 
   // AUTH
@@ -400,7 +343,7 @@ class SurrealDB {
   ///
   /// Returns: The engine version string.
   Future<String> engineVersion() async {
-    return await SurrealFlutterEngine.version();
+    return SurrealFlutterEngine.version();
   }
 
   /// Disposes the SurrealDB instance and cleans up resources.

@@ -3,3 +3,4 @@ rust_root: rust/
 dart_output: lib/src/rust
 dart_preamble: |
   import 'package:flutter_surrealdb/utils.dart';
+default_dart_async: false

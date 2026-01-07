@@ -1639,7 +1639,6 @@ version = "0.28.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f811f663912a69249fa620dcd2a005db7254529da2d8a0b23942e81f47084501"
 dependencies = [
- "earcutr",
  "float_next_after",
  "geo-types",
  "geographiclib-rs",
@@ -1648,7 +1647,6 @@ dependencies = [
  "robust",
  "rstar",
  "serde",
- "spade",
 ]
 
 [[package]]
@@ -1666,6 +1664,7 @@ dependencies = [
  "num-traits",
  "robust",
  "rstar",
+ "serde",
  "spade",
 ]
 
@@ -3287,14 +3286,14 @@ dependencies = [
 
 [[package]]
 name = "revision"
-version = "0.13.0"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d9dcd5731a0eb50c0e4d183d5a0e1affc42139c05954f8bc57c386ca1df246ed"
+checksum = "b762d27bdb312a92b2a1786e9dec700186f3c3e8a98b56b36c1b078e6bf2804a"
 dependencies = [
  "chrono",
- "geo 0.28.0",
+ "geo 0.31.0",
  "regex",
- "revision-derive 0.13.0",
+ "revision-derive 0.14.0",
  "roaring",
  "rust_decimal",
  "uuid",
@@ -3313,9 +3312,9 @@ dependencies = [
 
 [[package]]
 name = "revision-derive"
-version = "0.13.0"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e5babe1bdb35dda70850e128e2932f3e3f99a2203ff2686ee0c2d17b1ab7ed10"
+checksum = "e05651c26aaf33d5e642e380a43b1e5112f76668085aab9377130694160d5177"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3404,9 +3403,9 @@ dependencies = [
 
 [[package]]
 name = "roaring"
-version = "0.10.12"
+version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19e8d2cfa184d94d0726d650a9f4a1be7f9b76ac9fdb954219878dc00c1c1e7b"
+checksum = "f08d6a905edb32d74a5d5737a0c9d7e950c312f3c46cb0ca0a2ca09ea11878a0"
 dependencies = [
  "bytemuck",
  "byteorder",
@@ -3888,9 +3887,9 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 
 [[package]]
 name = "surrealdb-core"
-version = "3.0.0-alpha.12"
+version = "3.0.0-alpha.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c54dc015e16f91d596cbaeef65c2cf8a83ecef06fa2ca2959b5e187994cbb82"
+checksum = "097ab79c8495da0e27d2c57fb313c384f7dccce88fbdd999303c77f4481e0230"
 dependencies = [
  "addr",
  "affinitypool",
@@ -3948,7 +3947,7 @@ dependencies = [
  "rayon",
  "reblessive",
  "regex",
- "revision 0.13.0",
+ "revision 0.14.0",
  "ring",
  "roaring",
  "rust-stemmers",
@@ -3970,6 +3969,7 @@ dependencies = [
  "tempfile",
  "thiserror 1.0.69",
  "tokio",
+ "tokio-util",
  "tracing",
  "trice",
  "ulid",
@@ -4007,9 +4007,9 @@ dependencies = [
 
 [[package]]
 name = "surrealdb-types"
-version = "3.0.0-alpha.12"
+version = "3.0.0-alpha.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "706f530088b1a0eb36ee1964114d7cf3752710ff42c194ce901fc669a6212c2b"
+checksum = "5b816d69528d7ac452e64c4e7e06c1e4e735a7e0ad83e35e53229eaea5282f89"
 dependencies = [
  "anyhow",
  "bytes",
@@ -4033,9 +4033,9 @@ dependencies = [
 
 [[package]]
 name = "surrealdb-types-derive"
-version = "3.0.0-alpha.12"
+version = "3.0.0-alpha.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "956ac3a9365b5f1e5277f38efd7efa068a93d6acf1ada5a7fb4a7a88cc53ec68"
+checksum = "d7f5afe6b9db9e9465f28349b242b2019cb4fcbf310afab758b0a4ac40b6ee9f"
 dependencies = [
  "proc-macro2",
  "quote",

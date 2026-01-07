@@ -2,6 +2,7 @@ use flutter_rust_bridge::frb;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::RwLock;
+use uuid::Uuid;
 
 use arc_swap::ArcSwap;
 use dashmap::DashMap;
@@ -105,11 +106,13 @@ impl SurrealFlutterEngine {
         &self,
         method: Method,
         params: Vec<u8>,
-        version: Option<u8>,
+        session: Option<Vec<u8>>,
     ) -> Result<Vec<u8>> {
         let engine = self.0.read().await;
         let params = cbor::decode(&params)?;
-        let res = RpcProtocol::execute(&*engine, None, None, method, params.into_array()?).await?;
+        let session = session.map(|s| Uuid::from_slice(&s)).transpose()?;
+        let res =
+            RpcProtocol::execute(&*engine, None, session, method, params.into_array()?).await?;
 
         let value: Value = res.into_value();
         let out = cbor::encode(value)?;
@@ -168,8 +171,7 @@ impl SurrealFlutterEngine {
                     opts.transaction_timeout
                         .map(|qt| Duration::from_secs(qt as u64)),
                 )
-                .with_query_timeout(opts.query_timeout.map(|qt| Duration::from_secs(qt as u64)))
-                .with_strict_mode(opts.strict.map_or(Default::default(), |s| s)),
+                .with_query_timeout(opts.query_timeout.map(|qt| Duration::from_secs(qt as u64))),
         };
 
         let session = Session::default().with_rt(true);
@@ -184,24 +186,24 @@ impl SurrealFlutterEngine {
         Ok(SurrealFlutterEngine(RwLock::new(connection)))
     }
 
-    pub async fn export(&self, config: Option<Config>) -> Result<String> {
+    pub async fn export(&self, config: Option<Config>, session: Option<Vec<u8>>) -> Result<String> {
         let engine = self.0.read().await;
         let (tx, rx) = channel::unbounded();
-
+        let session = session.map(|s| Uuid::from_slice(&s)).transpose()?;
         match config {
             Some(config) => {
                 // let in_config = cbor::decode(&config.to_vec())?;
                 // let config = Config::try_from(&in_config)?;
                 engine
                     .kvs
-                    .export_with_config(engine.get_session(None).as_ref(), tx, config)
+                    .export_with_config(engine.get_session(session.as_ref()).as_ref(), tx, config)
                     .await?
                     .await?;
             }
             None => {
                 engine
                     .kvs
-                    .export(engine.get_session(None).as_ref(), tx)
+                    .export(engine.get_session(session.as_ref()).as_ref(), tx)
                     .await?
                     .await?;
             }
@@ -217,14 +219,41 @@ impl SurrealFlutterEngine {
         Ok(result)
     }
 
-    pub async fn import(&self, input: String) -> Result<()> {
+    pub async fn import(&self, input: String, session: Option<Vec<u8>>) -> Result<()> {
         let engine = self.0.read().await;
-
+        let session = session.map(|s| Uuid::from_slice(&s)).transpose()?;
         engine
             .kvs
-            .import(&input, engine.get_session(None).as_ref())
+            .import(&input, engine.get_session(session.as_ref()).as_ref())
             .await?;
 
+        Ok(())
+    }
+
+    pub async fn create_session(&self) -> Vec<u8> {
+        let engine = self.0.read().await;
+        let id = Uuid::new_v4();
+        let session = Session::default().with_rt(true);
+        let session = Arc::new(session);
+        engine.set_session(Some(id), session);
+        id.as_bytes().to_vec()
+    }
+
+    pub async fn fork_session(&self, id: Vec<u8>) -> Result<Vec<u8>> {
+        let engine = self.0.read().await;
+        let id = Uuid::from_slice(&id)?;
+        let session = engine.get_session(Some(&id));
+        let session = (*session).clone();
+        let session = Arc::new(session);
+        let new_id = Uuid::new_v4();
+        engine.set_session(Some(new_id), session);
+        Ok(new_id.as_bytes().to_vec())
+    }
+
+    pub async fn close_session(&self, id: Vec<u8>) -> Result<()> {
+        let engine = self.0.read().await;
+        let id = Uuid::from_slice(&id)?;
+        engine.del_session(&id);
         Ok(())
     }
 

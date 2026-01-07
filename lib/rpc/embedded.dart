@@ -26,7 +26,8 @@ class RustEngine with RPCEngine {
   }
 
   @override
-  Future<dynamic> execute(Method method, List<dynamic> params) async {
+  Future<dynamic> execute(Method method, List<dynamic> params,
+      {UuidValue? session}) async {
     final res = await _engine.execute(
       method: method,
       params: cbor.encode(
@@ -42,17 +43,33 @@ class RustEngine with RPCEngine {
   }
 
   @override
-  Future<String> export(Config? options) async {
-    return await _engine.export_(config: options);
+  Future<String> export(Config? options, {UuidValue? session}) async {
+    return await _engine.export_(config: options, session: session?.toBytes());
   }
 
   @override
-  Future<void> import(String input) async {
-    await _engine.import_(input: input);
+  Future<void> import(String input, {UuidValue? session}) async {
+    await _engine.import_(input: input, session: session?.toBytes());
   }
 
   @override
-  Future<String> engineVersion() {
+  Future<UuidValue> forkSession(UuidValue session) async {
+    return UuidValue.fromByteList(
+        await _engine.forkSession(id: session.toBytes()));
+  }
+
+  @override
+  Future<UuidValue> createSession() async {
+    return UuidValue.fromByteList(await _engine.createSession());
+  }
+
+  @override
+  Future<void> closeSession(UuidValue session) async {
+    await _engine.closeSession(id: session.toBytes());
+  }
+
+  @override
+  Future<String> engineVersion() async {
     return SurrealFlutterEngine.version();
   }
 }

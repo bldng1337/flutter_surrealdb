@@ -7,7 +7,7 @@ import 'package:uuid/uuid.dart';
 CborValue encodeDateTime(DateTime value) {
   final val = value.toUtc();
   return CborList([
-    CborInt(BigInt.from(val.millisecondsSinceEpoch ~/ 1000)),
+    CborInt(BigInt.from((val.millisecondsSinceEpoch / 1000).floor())),
     CborInt(BigInt.from(
         val.microsecond * 1000 + (val.millisecondsSinceEpoch % 1000) * 1000000))
   ], tags: [
@@ -82,7 +82,7 @@ dynamic decodeDBData(CborValue value) {
         if (value is! CborList || value.length != 2) {
           throw ArgumentError("Surreal[Decode]: Invalid record");
         }
-        return DBRecord(value.first.toString(), value.last.toString());
+        return DBRecord(value.first.toString(), decodeDBData(value.last));
       case 12:
         if (value is! CborList || value.length != 2) {
           throw ArgumentError("Surreal[Decode]: Invalid date");

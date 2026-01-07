@@ -5,7 +5,6 @@ use surrealdb_core::dbs::capabilities;
 
 #[derive(Deserialize)]
 pub struct Options {
-    pub strict: Option<bool>,
     pub query_timeout: Option<u8>,
     pub transaction_timeout: Option<u8>,
     pub capabilities: Option<CapabilitiesConfig>,

@@ -62,7 +62,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 
   @override
   Future<void> executeRustInitializers() async {
-    await api.crateApiInitApp();
+    api.crateApiInitApp();
   }
 
   @override
@@ -73,7 +73,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.11.1';
 
   @override
-  int get rustContentHash => 835786501;
+  int get rustContentHash => 55885841;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -84,27 +84,38 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
+  Future<void> crateApiEngineSurrealFlutterEngineCloseSession(
+      {required SurrealFlutterEngine that, required List<int> id});
+
   Future<SurrealFlutterEngine> crateApiEngineSurrealFlutterEngineConnect(
       {required String endpoint, Options? opts});
+
+  Future<Uint8List> crateApiEngineSurrealFlutterEngineCreateSession(
+      {required SurrealFlutterEngine that});
 
   Future<Uint8List> crateApiEngineSurrealFlutterEngineExecute(
       {required SurrealFlutterEngine that,
       required Method method,
       required List<int> params,
-      int? version});
+      Uint8List? session});
 
   Future<String> crateApiEngineSurrealFlutterEngineExport(
-      {required SurrealFlutterEngine that, Config? config});
+      {required SurrealFlutterEngine that, Config? config, Uint8List? session});
+
+  Future<Uint8List> crateApiEngineSurrealFlutterEngineForkSession(
+      {required SurrealFlutterEngine that, required List<int> id});
 
   Future<void> crateApiEngineSurrealFlutterEngineImport(
-      {required SurrealFlutterEngine that, required String input});
+      {required SurrealFlutterEngine that,
+      required String input,
+      Uint8List? session});
 
   Stream<DBNotification> crateApiEngineSurrealFlutterEngineNotifications(
       {required SurrealFlutterEngine that});
 
-  Future<String> crateApiEngineSurrealFlutterEngineVersion();
+  String crateApiEngineSurrealFlutterEngineVersion();
 
-  Future<void> crateApiInitApp();
+  void crateApiInitApp();
 
   RustArcIncrementStrongCountFnType
       get rust_arc_increment_strong_count_SurrealFlutterEngine;
@@ -125,6 +136,34 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
+  Future<void> crateApiEngineSurrealFlutterEngineCloseSession(
+      {required SurrealFlutterEngine that, required List<int> id}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealFlutterEngine(
+            that, serializer);
+        sse_encode_list_prim_u_8_loose(id, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 1, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: sse_decode_AnyhowException,
+      ),
+      constMeta: kCrateApiEngineSurrealFlutterEngineCloseSessionConstMeta,
+      argValues: [that, id],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiEngineSurrealFlutterEngineCloseSessionConstMeta =>
+      const TaskConstMeta(
+        debugName: "SurrealFlutterEngine_close_session",
+        argNames: ["that", "id"],
+      );
+
+  @override
   Future<SurrealFlutterEngine> crateApiEngineSurrealFlutterEngineConnect(
       {required String endpoint, Options? opts}) {
     return handler.executeNormal(NormalTask(
@@ -133,7 +172,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_String(endpoint, serializer);
         sse_encode_opt_box_autoadd_options(opts, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 1, port: port_);
+            funcId: 2, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData:
@@ -153,11 +192,38 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Future<Uint8List> crateApiEngineSurrealFlutterEngineCreateSession(
+      {required SurrealFlutterEngine that}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealFlutterEngine(
+            that, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 3, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_list_prim_u_8_strict,
+        decodeErrorData: null,
+      ),
+      constMeta: kCrateApiEngineSurrealFlutterEngineCreateSessionConstMeta,
+      argValues: [that],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiEngineSurrealFlutterEngineCreateSessionConstMeta =>
+      const TaskConstMeta(
+        debugName: "SurrealFlutterEngine_create_session",
+        argNames: ["that"],
+      );
+
+  @override
   Future<Uint8List> crateApiEngineSurrealFlutterEngineExecute(
       {required SurrealFlutterEngine that,
       required Method method,
       required List<int> params,
-      int? version}) {
+      Uint8List? session}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
@@ -165,16 +231,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that, serializer);
         sse_encode_method(method, serializer);
         sse_encode_list_prim_u_8_loose(params, serializer);
-        sse_encode_opt_box_autoadd_u_8(version, serializer);
+        sse_encode_opt_list_prim_u_8_strict(session, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 2, port: port_);
+            funcId: 4, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_list_prim_u_8_strict,
         decodeErrorData: sse_decode_AnyhowException,
       ),
       constMeta: kCrateApiEngineSurrealFlutterEngineExecuteConstMeta,
-      argValues: [that, method, params, version],
+      argValues: [that, method, params, session],
       apiImpl: this,
     ));
   }
@@ -182,27 +248,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiEngineSurrealFlutterEngineExecuteConstMeta =>
       const TaskConstMeta(
         debugName: "SurrealFlutterEngine_execute",
-        argNames: ["that", "method", "params", "version"],
+        argNames: ["that", "method", "params", "session"],
       );
 
   @override
   Future<String> crateApiEngineSurrealFlutterEngineExport(
-      {required SurrealFlutterEngine that, Config? config}) {
+      {required SurrealFlutterEngine that,
+      Config? config,
+      Uint8List? session}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealFlutterEngine(
             that, serializer);
         sse_encode_opt_box_autoadd_config(config, serializer);
+        sse_encode_opt_list_prim_u_8_strict(session, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 3, port: port_);
+            funcId: 5, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_String,
         decodeErrorData: sse_decode_AnyhowException,
       ),
       constMeta: kCrateApiEngineSurrealFlutterEngineExportConstMeta,
-      argValues: [that, config],
+      argValues: [that, config, session],
       apiImpl: this,
     ));
   }
@@ -210,27 +279,58 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiEngineSurrealFlutterEngineExportConstMeta =>
       const TaskConstMeta(
         debugName: "SurrealFlutterEngine_export",
-        argNames: ["that", "config"],
+        argNames: ["that", "config", "session"],
+      );
+
+  @override
+  Future<Uint8List> crateApiEngineSurrealFlutterEngineForkSession(
+      {required SurrealFlutterEngine that, required List<int> id}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealFlutterEngine(
+            that, serializer);
+        sse_encode_list_prim_u_8_loose(id, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 6, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_list_prim_u_8_strict,
+        decodeErrorData: sse_decode_AnyhowException,
+      ),
+      constMeta: kCrateApiEngineSurrealFlutterEngineForkSessionConstMeta,
+      argValues: [that, id],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiEngineSurrealFlutterEngineForkSessionConstMeta =>
+      const TaskConstMeta(
+        debugName: "SurrealFlutterEngine_fork_session",
+        argNames: ["that", "id"],
       );
 
   @override
   Future<void> crateApiEngineSurrealFlutterEngineImport(
-      {required SurrealFlutterEngine that, required String input}) {
+      {required SurrealFlutterEngine that,
+      required String input,
+      Uint8List? session}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealFlutterEngine(
             that, serializer);
         sse_encode_String(input, serializer);
+        sse_encode_opt_list_prim_u_8_strict(session, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 4, port: port_);
+            funcId: 7, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
         decodeErrorData: sse_decode_AnyhowException,
       ),
       constMeta: kCrateApiEngineSurrealFlutterEngineImportConstMeta,
-      argValues: [that, input],
+      argValues: [that, input, session],
       apiImpl: this,
     ));
   }
@@ -238,7 +338,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiEngineSurrealFlutterEngineImportConstMeta =>
       const TaskConstMeta(
         debugName: "SurrealFlutterEngine_import",
-        argNames: ["that", "input"],
+        argNames: ["that", "input", "session"],
       );
 
   @override
@@ -252,7 +352,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that, serializer);
         sse_encode_StreamSink_db_notification_Sse(sink, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 5, port: port_);
+            funcId: 8, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -272,12 +372,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<String> crateApiEngineSurrealFlutterEngineVersion() {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
+  String crateApiEngineSurrealFlutterEngineVersion() {
+    return handler.executeSync(SyncTask(
+      callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 6, port: port_);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_String,
@@ -296,12 +395,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  Future<void> crateApiInitApp() {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
+  void crateApiInitApp() {
+    return handler.executeSync(SyncTask(
+      callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 7, port: port_);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -557,16 +655,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Uint8List? dco_decode_opt_list_prim_u_8_strict(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_list_prim_u_8_strict(raw);
+  }
+
+  @protected
   Options dco_decode_options(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 4)
-      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
     return Options(
-      strict: dco_decode_opt_box_autoadd_bool(arr[0]),
-      queryTimeout: dco_decode_opt_box_autoadd_u_8(arr[1]),
-      transactionTimeout: dco_decode_opt_box_autoadd_u_8(arr[2]),
-      capabilities: dco_decode_opt_box_autoadd_capabilities_config(arr[3]),
+      queryTimeout: dco_decode_opt_box_autoadd_u_8(arr[0]),
+      transactionTimeout: dco_decode_opt_box_autoadd_u_8(arr[1]),
+      capabilities: dco_decode_opt_box_autoadd_capabilities_config(arr[2]),
     );
   }
 
@@ -939,15 +1042,24 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Uint8List? sse_decode_opt_list_prim_u_8_strict(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_list_prim_u_8_strict(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   Options sse_decode_options(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    var var_strict = sse_decode_opt_box_autoadd_bool(deserializer);
     var var_queryTimeout = sse_decode_opt_box_autoadd_u_8(deserializer);
     var var_transactionTimeout = sse_decode_opt_box_autoadd_u_8(deserializer);
     var var_capabilities =
         sse_decode_opt_box_autoadd_capabilities_config(deserializer);
     return Options(
-        strict: var_strict,
         queryTimeout: var_queryTimeout,
         transactionTimeout: var_transactionTimeout,
         capabilities: var_capabilities);
@@ -1306,9 +1418,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_list_prim_u_8_strict(
+      Uint8List? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_list_prim_u_8_strict(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_options(Options self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_opt_box_autoadd_bool(self.strict, serializer);
     sse_encode_opt_box_autoadd_u_8(self.queryTimeout, serializer);
     sse_encode_opt_box_autoadd_u_8(self.transactionTimeout, serializer);
     sse_encode_opt_box_autoadd_capabilities_config(
@@ -1398,16 +1520,31 @@ class SurrealFlutterEngineImpl extends RustOpaque
         .instance.api.rust_arc_decrement_strong_count_SurrealFlutterEnginePtr,
   );
 
+  Future<void> closeSession({required List<int> id}) => RustLib.instance.api
+      .crateApiEngineSurrealFlutterEngineCloseSession(that: this, id: id);
+
+  Future<Uint8List> createSession() =>
+      RustLib.instance.api.crateApiEngineSurrealFlutterEngineCreateSession(
+        that: this,
+      );
+
   Future<Uint8List> execute(
-          {required Method method, required List<int> params, int? version}) =>
+          {required Method method,
+          required List<int> params,
+          Uint8List? session}) =>
       RustLib.instance.api.crateApiEngineSurrealFlutterEngineExecute(
-          that: this, method: method, params: params, version: version);
+          that: this, method: method, params: params, session: session);
 
-  Future<String> export_({Config? config}) => RustLib.instance.api
-      .crateApiEngineSurrealFlutterEngineExport(that: this, config: config);
+  Future<String> export_({Config? config, Uint8List? session}) =>
+      RustLib.instance.api.crateApiEngineSurrealFlutterEngineExport(
+          that: this, config: config, session: session);
 
-  Future<void> import_({required String input}) => RustLib.instance.api
-      .crateApiEngineSurrealFlutterEngineImport(that: this, input: input);
+  Future<Uint8List> forkSession({required List<int> id}) => RustLib.instance.api
+      .crateApiEngineSurrealFlutterEngineForkSession(that: this, id: id);
+
+  Future<void> import_({required String input, Uint8List? session}) =>
+      RustLib.instance.api.crateApiEngineSurrealFlutterEngineImport(
+          that: this, input: input, session: session);
 
   Stream<DBNotification> notifications() =>
       RustLib.instance.api.crateApiEngineSurrealFlutterEngineNotifications(

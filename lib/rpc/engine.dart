@@ -3,76 +3,15 @@ import 'package:flutter_surrealdb/flutter_surrealdb.dart';
 import 'package:flutter_surrealdb/src/rust/api/engine.dart';
 import 'package:uuid/uuid_value.dart';
 
-enum Output {
-  none,
-  null_,
-  diff,
-  before,
-  after,
-}
-
-extension OutputValue on Output {
-  String get value {
-    switch (this) {
-      case Output.none:
-        return 'none';
-      case Output.null_:
-        return 'null';
-      case Output.diff:
-        return 'diff';
-      case Output.before:
-        return 'before';
-      case Output.after:
-        return 'after';
-    }
-  }
-}
-
-/// Data expression options for `update` operations.
-enum DataExpr {
-  content,
-  merge,
-  replace,
-  patch,
-}
-
-extension DataExprValue on DataExpr {
-  String get value {
-    switch (this) {
-      case DataExpr.content:
-        return 'content';
-      case DataExpr.merge:
-        return 'merge';
-      case DataExpr.replace:
-        return 'replace';
-      case DataExpr.patch:
-        return 'patch';
-    }
-  }
-}
-
-/// Data expression options for `insert` operations.
-enum InsertDataExpr {
-  content,
-  single,
-}
-
-extension InsertDataExprValue on InsertDataExpr {
-  String get value {
-    switch (this) {
-      case InsertDataExpr.content:
-        return 'content';
-      case InsertDataExpr.single:
-        return 'single';
-    }
-  }
-}
-
 mixin RPCEngine {
-  Future<dynamic> execute(Method method, List<dynamic> params);
+  Future<dynamic> execute(Method method, List<dynamic> params,
+      {UuidValue? session});
   Future<String> engineVersion();
-  Future<String> export(Config? options);
-  Future<void> import(String input);
+  Future<String> export(Config? options, {UuidValue? session});
+  Future<void> import(String input, {UuidValue? session});
+  Future<UuidValue> forkSession(UuidValue session);
+  Future<UuidValue> createSession();
+  Future<void> closeSession(UuidValue session);
   Future<void> dispose();
   Future<void> connect({required String endpoint, Options? opts});
   Stream<Notification> get notifications;
@@ -84,8 +23,8 @@ mixin RPCEngine {
   /// Parameters:
   /// - [ns]: The namespace to set. Pass null to unset.
   /// - [db]: The database to set. Pass null to unset.
-  Future<void> use({String? db, String? ns}) async {
-    await execute(Method.use, [ns, db]);
+  Future<void> use({String? db, String? ns, UuidValue? session}) async {
+    await execute(Method.use, [ns, db], session: session);
   }
 
   /// Defines a session variable on the current connection.
@@ -95,8 +34,9 @@ mixin RPCEngine {
   /// Parameters:
   /// - [key]: The name of the variable (without $).
   /// - [value]: The value to assign.
-  Future<void> set(String key, dynamic value) async {
-    await execute(Method.set_, [key, value]);
+  /// - [session]: Optional session ID.
+  Future<void> set(String key, dynamic value, {UuidValue? session}) async {
+    await execute(Method.set_, [key, value], session: session);
   }
 
   /// Removes a session variable from the current connection.
@@ -105,8 +45,9 @@ mixin RPCEngine {
   ///
   /// Parameters:
   /// - [name]: The name of the variable to remove.
-  Future<void> unset(String name) async {
-    await execute(Method.unset, [name]);
+  /// - [session]: Optional session ID.
+  Future<void> unset(String name, {UuidValue? session}) async {
+    await execute(Method.unset, [name], session: session);
   }
 
   // QUERY
@@ -118,9 +59,11 @@ mixin RPCEngine {
   /// Parameters:
   /// - [query]: The SurrealQL query string.
   /// - [vars]: Optional variables for the query.
+  /// - [session]: Optional session ID.
   /// Returns: List of results.
-  Future<dynamic> query(String query, {Map<String, dynamic>? vars}) async {
-    return await execute(Method.query, [query, vars]);
+  Future<dynamic> query(String query,
+      {Map<String, dynamic>? vars, UuidValue? session}) async {
+    return await execute(Method.query, [query, vars], session: session);
   }
 
   /// Selects either all records in a table or a single record.
@@ -129,9 +72,10 @@ mixin RPCEngine {
   ///
   /// Parameters:
   /// - [thing]: The Resource (table or record) to select.
+  /// - [session]: Optional session ID.
   /// Returns: The selected data.
-  Future<dynamic> select(Resource thing) async {
-    return await execute(Method.select, [thing]);
+  Future<dynamic> select(Resource thing, {UuidValue? session}) async {
+    return await execute(Method.select, [thing], session: session);
   }
 
   /// Initiates a live query for a specified table.
@@ -141,9 +85,12 @@ mixin RPCEngine {
   /// Parameters:
   /// - [table]: The table to initiate the live query for.
   /// - [diff]: If true, notifications contain JSON patches instead of full records.
+  /// - [session]: Optional session ID.
   /// Returns: A stream of notifications.
-  Future<UuidValue> live(DBTable table, {bool? diff}) async {
-    return await execute(Method.live, [table, if (diff != null) diff]);
+  Future<UuidValue> live(DBTable table,
+      {bool? diff, UuidValue? session}) async {
+    return await execute(Method.live, [table, if (diff != null) diff],
+        session: session);
   }
 
   /// Kills an active live query.
@@ -152,76 +99,71 @@ mixin RPCEngine {
   ///
   /// Parameters:
   /// - [id]: The UUID of the live query to kill.
-  Future<void> kill(UuidValue id) async {
-    await execute(Method.kill, [id]);
+  /// - [session]: Optional session ID.
+  Future<void> kill(UuidValue id, {UuidValue? session}) async {
+    await execute(Method.kill, [id], session: session);
   }
 
   /// Creates a record with a random or specified ID.
   ///
-  /// This corresponds to the 'create' RPC method.
+  /// This corresponds to the 'create' RPC method (RPCv1).
   ///
   /// Parameters:
   /// - [res]: The thing (Table or Record ID) to create. Passing just a table will result in a randomly generated ID.
   /// - [data]: The content of the record.
-  /// - [only]: Optional, corresponds to [`ONLY`](https://surrealdb.com/docs/surrealql/statements/create#only) of the `CREATE` statement.
-  /// - [output]: Optional, corresponds to [`RETURN`](https://surrealdb.com/docs/surrealql/statements/create#return-values) of the `CREATE` statement.
-  /// - [timeout]: Optional, corresponds to [`TIMEOUT`](https://surrealdb.com/docs/surrealql/statements/create#timeout) of the `CREATE` statement.
-  /// - [version]: Optional, corresponds to [`VERSION`](https://surrealdb.com/docs/surrealql/statements/create#version) of the `CREATE` statement.
+  /// - [session]: Optional session ID.
   /// Returns: The created record(s).
   Future<dynamic> create(Resource res, dynamic data,
-      {bool? only,
-      Output? output,
-      Duration? timeout,
-      DateTime? version}) async {
-    final params = {
-      if (only != null) "only": only,
-      if (output != null) "output": output.value,
-      if (timeout != null) "timeout": timeout,
-      if (version != null) "version": version,
-    };
-    return await execute(
-        Method.create, [res, data, if (params.isNotEmpty) params]);
+      {UuidValue? session}) async {
+    return await execute(Method.create, [res, data], session: session);
   }
 
   // Mutation
 
-  /// Modifies either all records in a table or a single record with specified data if the record already exists.
+  /// Replaces either all records in a table or a single record with specified data.
   ///
-  /// This corresponds to the 'update' RPC method.
+  /// This corresponds to the 'update' RPC method (RPCv1).
+  /// Note: This replaces the entire record. Use [merge] for partial updates.
   ///
   /// Parameters:
   /// - [thing]: The thing (Table or Record ID) to update.
   /// - [data]: The content of the record.
-  /// - [dataExpr]: Optional, specifies how the data parameter is interpreted. content: corresponds to [`CONTENT`](https://surrealdb.com/docs/surrealql/statements/update#content-clause) of the `UPDATE` statement. merge: corresponds to [`MERGE`](https://surrealdb.com/docs/surrealql/statements/update#merge-clause) of the `UPDATE` statement. replace: corresponds to [`REPLACE`](https://surrealdb.com/docs/surrealql/statements/update#replace-clause) of the `UPDATE` statement. patch: corresponds to [`PATCH`](https://surrealdb.com/docs/surrealql/statements/update#patch-clause) of the `UPDATE` statement.
-  /// - [only]: Optional, corresponds to [`ONLY`](https://surrealdb.com/docs/surrealql/statements/update#using-the-only-clause) of the `UPDATE` statement.
-  /// - [condition]: Optional, corresponds to [`WHERE`](https://surrealdb.com/docs/surrealql/statements/update#conditional-update-with-where-clause) of the `UPDATE` statement.
-  /// - [output]: Optional, corresponds to [`RETURN`](https://surrealdb.com/docs/surrealql/statements/update#alter-the-return-value) of the `UPDATE` statement.
-  /// - [timeout]: Optional, corresponds to [`TIMEOUT`](https://surrealdb.com/docs/surrealql/statements/update#using-a-timeout) of the `UPDATE` statement.
-  /// - [vars]: Optional, [`Session Variables`](#session-variables).
+  /// - [session]: Optional session ID.
   /// Returns: The updated data.
-  Future<dynamic> update(
-    Resource thing,
-    dynamic data, {
-    DataExpr? dataExpr,
-    bool? only,
-    String? condition,
-    Output? output,
-    Duration? timeout,
-    Map<String, dynamic>? vars,
-  }) async {
-    final params = {
-      if (dataExpr != null) "data_expr": dataExpr.value,
-      if (only != null) "only": only,
-      if (condition != null) "cond": condition,
-      if (output != null) "output": output.value,
-      if (timeout != null) "timeout": timeout,
-      if (vars != null) "vars": vars,
-    };
-    return await execute(Method.update, [
-      thing,
-      data,
-      if (params.isNotEmpty) params,
-    ]);
+  Future<dynamic> update(Resource thing, dynamic data,
+      {UuidValue? session}) async {
+    return await execute(Method.update, [thing, data], session: session);
+  }
+
+  /// Merges specified data into either all records in a table or a single record.
+  ///
+  /// This corresponds to the 'merge' RPC method (RPCv1).
+  /// Unlike [update], this only modifies the specified fields.
+  ///
+  /// Parameters:
+  /// - [thing]: The thing (Table or Record ID) to merge into.
+  /// - [data]: The data to merge.
+  /// - [session]: Optional session ID.
+  /// Returns: The merged record(s).
+  Future<dynamic> merge(Resource thing, dynamic data,
+      {UuidValue? session}) async {
+    return await execute(Method.merge, [thing, data], session: session);
+  }
+
+  /// Patches either all records in a table or a single record with JSON Patch operations.
+  ///
+  /// This corresponds to the 'patch' RPC method (RPCv1).
+  ///
+  /// Parameters:
+  /// - [thing]: The thing (Table or Record ID) to patch.
+  /// - [patches]: An array of patches following the JSON Patch specification.
+  /// - [diff]: Optional, if true returns just the diff instead of the full record.
+  /// - [session]: Optional session ID.
+  /// Returns: The patched record(s) or diff.
+  Future<dynamic> patch(Resource thing, List<Map<String, dynamic>> patches,
+      {bool? diff, UuidValue? session}) async {
+    return await execute(Method.patch, [thing, patches, if (diff != null) diff],
+        session: session);
   }
 
   /// Replaces either all records in a table or a single record with specified data.
@@ -231,72 +173,70 @@ mixin RPCEngine {
   /// Parameters:
   /// - [thing]: The thing (Table or Record ID) to upsert.
   /// - [data]: The content of the record.
+  /// - [session]: Optional session ID.
   /// Returns: The upserted data.
-  Future<dynamic> upsert(Resource thing, dynamic data) async {
-    return await execute(Method.upsert, [thing, data]);
+  Future<dynamic> upsert(Resource thing, dynamic data,
+      {UuidValue? session}) async {
+    return await execute(Method.upsert, [thing, data], session: session);
   }
 
   /// Deletes either all records in a table or a single record.
   ///
-  /// This corresponds to the 'delete' RPC method.
+  /// This corresponds to the 'delete' RPC method (RPCv1).
   ///
   /// Parameters:
   /// - [thing]: The thing (Table or Record ID) to delete.
-  /// - [only]: Optional, corresponds to [`ONLY`](https://surrealdb.com/docs/surrealql/statements/delete#using-the-only-clause) of the `DELETE` statement.
-  /// - [output]: Optional, by default, the delete method returns nothing. To change what is returned, we can use the output option, specifying either "none", "null", "diff", "before", "after".
-  /// - [timeout]: Optional, corresponds to [`TIMEOUT`](https://surrealdb.com/docs/surrealql/statements/delete#using-timeout-duration-records-based-on-conditions) of the `DELETE` statement.
+  /// - [session]: Optional session ID.
   /// Returns: The deleted data.
-  Future<dynamic> delete(Resource thing,
-      {bool? only, Output? output, Duration? timeout}) async {
-    final args = {
-      if (only != null) "only": only,
-      if (output != null) "output": output.value,
-      if (timeout != null) "timeout": timeout,
-    };
-
-    return await execute(Method.delete, [
-      thing,
-      if (args.isNotEmpty) args,
-    ]);
+  Future<dynamic> delete(Resource thing, {UuidValue? session}) async {
+    return await execute(Method.delete, [thing], session: session);
   }
 
   /// Inserts one or multiple records in a table.
   ///
-  /// This corresponds to the 'insert' RPC method.
+  /// This corresponds to the 'insert' RPC method (RPCv1).
   ///
   /// Parameters:
   /// - [thing]: The table to insert into.
   /// - [data]: The record(s) to insert.
-  /// - [dataExpr]: Optional, specifies how the data parameter is interpreted. content (default): The data parameter should be a single object representing one record, or an array of objects representing multiple records. single: The data parameter should be a object where keys represent field names and values are arrays of the same length. The records are constructed by combining the elements at the same index from each array.
-  /// - [relation]: Optional, a boolean indicating whether the inserted records are relations.
-  /// - [output]: Optional, corresponds to [`RETURN`](https://surrealdb.com/docs/surrealql/statements/insert#return-values) of the `INSERT` statement.
-  /// - [timeout]: Optional, a duration, stating how long the statement is run within the database before timing out.
-  /// - [version]: Optional, if you are using SurrealKV as the storage engine with versioning enabled, when creating a record you can specify a version for each record.
-  /// - [vars]: Optional, [`Session Variables`](#session-variables).
+  /// - [session]: Optional session ID.
   /// Returns: List of inserted records.
-  Future<List<dynamic>> insert(
-    DBTable thing,
-    dynamic data, {
-    InsertDataExpr? dataExpr,
-    bool? relation,
-    Output? output,
-    Duration? timeout,
-    DateTime? version,
-    Map<String, dynamic>? vars,
-  }) async {
-    final vals = {
-      if (dataExpr != null) "data_expr": dataExpr.value,
-      if (relation != null) "relation": relation,
-      if (output != null) "output": output.value,
-      if (timeout != null) "timeout": timeout,
-      if (version != null) "version": version,
-      if (vars != null) "vars": vars,
-    };
-    return await execute(Method.insert, [
-      thing,
-      data,
-      if (vals.isNotEmpty) vals,
-    ]);
+  Future<List<dynamic>> insert(DBTable thing, dynamic data,
+      {UuidValue? session}) async {
+    return await execute(Method.insert, [thing, data], session: session);
+  }
+
+  /// Inserts a relation record.
+  ///
+  /// This corresponds to the 'insert_relation' RPC method (RPCv1).
+  ///
+  /// Parameters:
+  /// - [table]: The relation table to insert into.
+  /// - [data]: The relation data (should include 'in' and 'out' fields).
+  /// - [session]: Optional session ID.
+  /// Returns: The inserted relation record(s).
+  Future<dynamic> insertRelation(DBTable table, dynamic data,
+      {UuidValue? session}) async {
+    return await execute(Method.insertRelation, [table, data],
+        session: session);
+  }
+
+  /// Creates a graph edge between two records.
+  ///
+  /// This corresponds to the 'relate' RPC method.
+  ///
+  /// Parameters:
+  /// - [inRecord]: The source record.
+  /// - [relation]: The relation table name.
+  /// - [outRecord]: The target record.
+  /// - [data]: Optional data to store on the edge.
+  /// - [session]: Optional session ID.
+  /// Returns: The created relation.
+  Future<dynamic> relate(Resource inRecord, String relation, Resource outRecord,
+      {dynamic data, UuidValue? session}) async {
+    return await execute(
+        Method.relate, [inRecord, relation, outRecord, if (data != null) data],
+        session: session);
   }
 
   // AUTH
@@ -310,15 +250,20 @@ mixin RPCEngine {
   /// - [db]: Specifies the database of the record access method.
   /// - [access]: Specifies the access method.
   /// - [variables]: Specifies any variables used by the SIGNUP query of the record access method.
+  /// - [session]: Optional session ID.
   /// Returns: The signup result (token, etc.).
   Future<dynamic> signup(
       {required String ns,
       required String db,
       required String access,
-      required dynamic variables}) async {
-    return await execute(Method.signup, [
-      {"NS": ns, "DB": db, "AC": access, ...variables}
-    ]);
+      required dynamic variables,
+      UuidValue? session}) async {
+    return await execute(
+        Method.signup,
+        [
+          {"NS": ns, "DB": db, "AC": access, ...variables}
+        ],
+        session: session);
   }
 
   /// Signs in as a root, NS, DB or record user.
@@ -332,6 +277,7 @@ mixin RPCEngine {
   /// - [password]: The password of the database user. Only required for `ROOT, NS & DB` authentication.
   /// - [access]: Specifies the access method. Only required for `RECORD` authentication.
   /// - [variables]: Specifies any variables to pass to the `SIGNIN` query. Only relevant for `RECORD` authentication.
+  /// - [session]: Optional session ID.
   /// Returns: The signin result.
   Future<dynamic> signin(
       {String? ns,
@@ -339,24 +285,29 @@ mixin RPCEngine {
       String? username,
       String? password,
       String? access,
-      required dynamic variables}) async {
-    return await execute(Method.signin, [
-      {
-        if (ns != null) "NS": ns,
-        if (db != null) "DB": db,
-        if (username != null) "user": username,
-        if (password != null) "pass": password,
-        if (access != null) "AC": access,
-        ...variables
-      }
-    ]);
+      required dynamic variables,
+      UuidValue? session}) async {
+    return await execute(
+        Method.signin,
+        [
+          {
+            if (ns != null) "NS": ns,
+            if (db != null) "DB": db,
+            if (username != null) "user": username,
+            if (password != null) "pass": password,
+            if (access != null) "AC": access,
+            ...variables
+          }
+        ],
+        session: session);
   }
 
   /// Invalidates the user's session for the current connection.
   ///
   /// This corresponds to the 'invalidate' RPC method.
-  Future<void> invalidate() async {
-    await execute(Method.invalidate, []);
+  /// - [session]: Optional session ID.
+  Future<void> invalidate({UuidValue? session}) async {
+    await execute(Method.invalidate, [], session: session);
   }
 
   /// Authenticates a user against SurrealDB with a token.
@@ -365,8 +316,9 @@ mixin RPCEngine {
   ///
   /// Parameters:
   /// - [token]: The authentication token.
-  Future<void> authenticate(String token) async {
-    await execute(Method.authenticate, [token]);
+  /// - [session]: Optional session ID.
+  Future<void> authenticate(String token, {UuidValue? session}) async {
+    await execute(Method.authenticate, [token], session: session);
   }
 
   /// Returns the record of an authenticated record user.
@@ -374,8 +326,9 @@ mixin RPCEngine {
   /// This corresponds to the 'info' RPC method.
   ///
   /// Returns: The user info.
-  Future<dynamic> info() async {
-    return await execute(Method.info, []);
+  /// - [session]: Optional session ID.
+  Future<dynamic> info({UuidValue? session}) async {
+    return await execute(Method.info, [], session: session);
   }
 
   //OTHER
@@ -388,18 +341,22 @@ mixin RPCEngine {
   /// - [function]: The name of the function or model to execute. Prefix with `fn::` for custom functions or `ml::` for machine learning models.
   /// - [version]: Optional, the version of the function or model to execute.
   /// - [args]: Optional, the arguments to pass to the function or model.
+  /// - [session]: Optional session ID.
   /// Returns: The execution result.
   Future<dynamic> run(String function,
-      {List<dynamic>? args, String? version}) async {
-    return await execute(Method.run, [function, version, args]);
+      {List<dynamic>? args, String? version, UuidValue? session}) async {
+    return await execute(Method.run, [function, version, args],
+        session: session);
   }
 
   /// Returns version information about the database/server.
   ///
   /// This corresponds to the 'version' RPC method.
   ///
+  /// Parameters:
+  /// - [session]: Optional session ID.
   /// Returns: Version info.
-  Future<dynamic> version() async {
-    return await execute(Method.version, []);
+  Future<dynamic> version({UuidValue? session}) async {
+    return await execute(Method.version, [], session: session);
   }
 }

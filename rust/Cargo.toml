@@ -7,8 +7,8 @@ edition = "2021"
 crate-type = ["cdylib", "staticlib"]
 
 [workspace.dependencies]
-surrealdb-core = { version = "=3.0.0-alpha.12" }
-surrealdb-types = { version = "=3.0.0-alpha.12" }
+surrealdb-core = { version = "=3.0.0-alpha.14" }
+surrealdb-types = { version = "=3.0.0-alpha.14" }
 
 [dependencies]
 flutter_rust_bridge = {version="=2.11.1",features=["log"]}
@@ -31,6 +31,7 @@ dashmap   = "6.1.0"
 
 [target.'cfg(any(target_os = "android", target_os = "windows", target_os = "linux", target_os = "macos", target_os = "ios"))'.dependencies]
 surrealdb-core = { workspace = true, features = ["kv-surrealkv"] }
+
 #wasm32-unknown-unknown
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 surrealdb-core = { workspace = true, features = ["kv-indxdb"] }

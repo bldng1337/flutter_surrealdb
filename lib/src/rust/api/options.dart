@@ -29,13 +29,11 @@ sealed class CapabilitiesConfig with _$CapabilitiesConfig {
 }
 
 class Options {
-  final bool? strict;
   final int? queryTimeout;
   final int? transactionTimeout;
   final CapabilitiesConfig? capabilities;
 
   const Options({
-    this.strict,
     this.queryTimeout,
     this.transactionTimeout,
     this.capabilities,
@@ -43,7 +41,6 @@ class Options {
 
   @override
   int get hashCode =>
-      strict.hashCode ^
       queryTimeout.hashCode ^
       transactionTimeout.hashCode ^
       capabilities.hashCode;
@@ -53,7 +50,6 @@ class Options {
       identical(this, other) ||
       other is Options &&
           runtimeType == other.runtimeType &&
-          strict == other.strict &&
           queryTimeout == other.queryTimeout &&
           transactionTimeout == other.transactionTimeout &&
           capabilities == other.capabilities;
