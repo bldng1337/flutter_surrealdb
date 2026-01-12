@@ -5,6 +5,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_io.dart';
 import 'package:flutter_surrealdb/flutter_surrealdb.dart';
 import 'package:flutter_surrealdb/rpc/embedded.dart';
 import 'package:flutter_surrealdb/rpc/engine.dart';
+import 'package:flutter_surrealdb/error/query.dart';
 
 import 'package:uuid/uuid_value.dart';
 
@@ -14,7 +15,6 @@ export 'src/rust/api/options.dart' show Options;
 export 'data/ressource.dart';
 export 'data/notification.dart' show Notification;
 export 'data/options.dart';
-export 'error/query.dart';
 
 class SurrealDB {
   final RPCEngine _engine;
@@ -88,14 +88,9 @@ class SurrealDB {
   /// Parameters:
   /// - [query]: The SurrealQL query string.
   /// - [vars]: Optional variables for the query.
-  /// - [throwOnError]: If true, throw on error, otherwise return the result with an ["error"] field in case of an error.
   /// Returns: List of results.
-  Future<dynamic> query(String query,
-      {Map<String, dynamic>? vars, bool throwOnError = true}) async {
+  Future<dynamic> query(String query, {Map<String, dynamic>? vars}) async {
     final res = await _engine.query(query, vars: vars);
-    if (throwOnError == false) {
-      return res;
-    }
     if (res == null || res is! Iterable) {
       throw StateError(
           "Invalid response from query: expected an Iterable got ${res.runtimeType}");

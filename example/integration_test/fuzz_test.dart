@@ -6,6 +6,12 @@ import 'package:flutter_test/flutter_test.dart'
 import 'package:flutter_surrealdb/flutter_surrealdb.dart';
 import 'package:glados/glados.dart';
 
+void main() {
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(() async => await SurrealDB.ensureInitialized());
+  dotest();
+}
+
 void dotest() {
   late SurrealDB db;
 
@@ -65,9 +71,4 @@ void dotest() {
     final unpacked = (result as Map<String, dynamic>)['data'];
     expect(unpacked, a);
   }, timeout: const Timeout(Duration(seconds: 100)));
-}
-
-void main() {
-  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
-  dotest();
 }

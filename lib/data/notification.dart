@@ -4,7 +4,7 @@ import 'package:uuid/uuid_value.dart';
 class Notification {
   final UuidValue id;
   final Action action;
-  final DBRecord record;
+  final DBRecord? record;
   final dynamic result;
 
   Notification({

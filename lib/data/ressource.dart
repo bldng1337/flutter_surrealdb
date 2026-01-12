@@ -11,6 +11,10 @@ class DBTable implements Resource {
   Map<String, dynamic> toJson() => {
         "tb": tb,
       };
+
+  DBRecord record(dynamic id) => DBRecord(tb, id);
+
+
   @override
   String get resource => tb;
 

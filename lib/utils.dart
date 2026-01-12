@@ -89,7 +89,16 @@ dynamic decodeDBData(CborValue value) {
         }
         return decodeDateTime(value);
       case 14:
-        if (value is! CborList || value.length != 2) {
+        if (value is! CborList || value.length > 2 || value.isEmpty) {
+          throw ArgumentError("Surreal[Decode]: Invalid duration");
+        }
+        if (value.length == 1) {
+          if (value.first is! CborInt) {
+            throw ArgumentError("Surreal[Decode]: Invalid duration");
+          }
+          return Duration(seconds: (value.first as CborInt).toInt());
+        }
+        if (value.first is! CborInt || value.last is! CborInt) {
           throw ArgumentError("Surreal[Decode]: Invalid duration");
         }
         return Duration(
