@@ -51,9 +51,9 @@ lto = true
 codegen-units = 1
 
 [profile.dev]
-opt-level = 3
-panic = "abort"
-
+opt-level = 1
+debug="line-tables-only"
+panic = "unwind"
 
 [build-dependencies]
 cargo-lock = "10.0.1"
