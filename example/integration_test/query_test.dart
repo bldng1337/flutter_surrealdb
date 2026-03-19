@@ -238,6 +238,7 @@ void dotest() {
 
   group('Edge Cases', () {
     test('should handle empty query result', () async {
+      await db.query("DEFINE TABLE IF NOT EXISTS test");
       final [result] =
           await db.query("SELECT * FROM test WHERE name = 'nonexistent'");
       expect(result, isEmpty);

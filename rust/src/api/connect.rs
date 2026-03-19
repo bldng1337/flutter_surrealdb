@@ -1,32 +1,23 @@
 use flutter_rust_bridge::frb;
 use std::sync::Arc;
 
-use arc_swap::ArcSwap;
-
-use dashmap::DashMap;
 use surrealdb_core::dbs::Session;
 use surrealdb_core::kvs::Datastore;
 use surrealdb_core::rpc::{DbResult, RpcProtocol};
-use surrealdb_types::Value;
-use tokio::sync::Semaphore;
+use surrealdb_types::{HashMap, Value};
+use tokio::sync::RwLock;
 use uuid::Uuid;
 
 #[frb(ignore)]
 pub(crate) struct SurrealFlutterConnection {
     pub kvs: Arc<Datastore>,
-    pub lock: Arc<Semaphore>,
-    pub session: ArcSwap<Session>,
-    pub sessions: DashMap<Uuid, Arc<Session>>,
+    pub sessions: HashMap<Option<Uuid>, Arc<RwLock<Session>>>,
 }
 
 // #[frb(ignore)]
 impl RpcProtocol for SurrealFlutterConnection {
     fn kvs(&self) -> &Datastore {
         &self.kvs
-    }
-
-    fn lock(&self) -> Arc<Semaphore> {
-        self.lock.clone()
     }
 
     fn version_data(&self) -> DbResult {
@@ -40,37 +31,8 @@ impl RpcProtocol for SurrealFlutterConnection {
     // ------------------------------
 
     /// The current session for this RPC context
-    fn get_session(&self, id: Option<&Uuid>) -> Arc<Session> {
-        if let Some(id) = id {
-            if let Some(session) = self.sessions.get(id) {
-                session.clone()
-            } else {
-                let session = Arc::new(Session::default());
-                self.sessions.insert(*id, session.clone());
-                session
-            }
-        } else {
-            self.session.load_full()
-        }
-    }
-
-    /// Mutable access to the current session for this RPC context
-    fn set_session(&self, id: Option<Uuid>, session: Arc<Session>) {
-        if let Some(id) = id {
-            self.sessions.insert(id, session);
-        } else {
-            self.session.store(session);
-        }
-    }
-
-    /// Mutable access to the current session for this RPC context
-    fn del_session(&self, id: &Uuid) {
-        self.sessions.remove(id);
-    }
-
-    /// Lists all sessions
-    fn list_sessions(&self) -> Vec<Uuid> {
-        self.sessions.iter().map(|x| *x.key()).collect()
+    fn session_map(&self) -> &HashMap<Option<Uuid>, Arc<RwLock<Session>>> {
+        &self.sessions
     }
 
     // ------------------------------
@@ -89,7 +51,7 @@ impl RpcProtocol for SurrealFlutterConnection {
     }
 
     /// Handles the cleanup of live queries
-    async fn cleanup_lqs(&self, session_id: Option<&Uuid>) {}
+    async fn cleanup_lqs(&self, _session_id: Option<&Uuid>) {}
 
     async fn cleanup_all_lqs(&self) {}
 }

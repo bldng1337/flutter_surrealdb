@@ -4,16 +4,13 @@ use std::time::Duration;
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
-use arc_swap::ArcSwap;
-use dashmap::DashMap;
 use surrealdb_core::dbs::Session;
 pub use surrealdb_core::kvs::export::{Config, TableConfig};
-use surrealdb_core::kvs::{Datastore, LockType, TransactionType};
+use surrealdb_core::kvs::Datastore;
 use surrealdb_core::rpc::format::cbor;
 pub use surrealdb_core::rpc::Method;
-use surrealdb_core::rpc::{RpcError, RpcProtocol};
-use surrealdb_types::{Array, SurrealValue, Value};
-use tokio::sync::Semaphore;
+use surrealdb_core::rpc::RpcProtocol;
+use surrealdb_types::{HashMap, SurrealValue, Value};
 
 use anyhow::{anyhow, Result};
 
@@ -53,7 +50,9 @@ pub enum _Method {
     Signup,
     Signin,
     Authenticate,
+    Refresh,
     Invalidate,
+    Revoke,
     Reset,
     Kill,
     Live,
@@ -72,6 +71,12 @@ pub enum _Method {
     Relate,
     Run,
     InsertRelation,
+    Attach,
+    Sessions,
+    Detach,
+    Begin,
+    Commit,
+    Cancel,
 }
 
 #[derive(Clone)]
@@ -111,8 +116,8 @@ impl SurrealFlutterEngine {
         let engine = self.0.read().await;
         let params = cbor::decode(&params)?;
         let session = session.map(|s| Uuid::from_slice(&s)).transpose()?;
-        let res =
-            RpcProtocol::execute(&*engine, None, session, method, params.into_array()?).await?;
+        let res = RpcProtocol::execute(&*engine, None, session, method, params.into_array()?)
+            .await?;
 
         let value: Value = res.into_value();
         let out = cbor::encode(value)?;
@@ -175,12 +180,11 @@ impl SurrealFlutterEngine {
         };
 
         let session = Session::default().with_rt(true);
-
+        let mut sessions = HashMap::new();
+        sessions.insert(None, Arc::new(RwLock::new(session)));
         let connection = SurrealFlutterConnection {
             kvs: Arc::new(kvs),
-            session: ArcSwap::new(Arc::new(session)),
-            lock: Arc::new(Semaphore::new(1)),
-            sessions: DashMap::new(),
+            sessions,
         };
 
         Ok(SurrealFlutterEngine(RwLock::new(connection)))
@@ -194,18 +198,18 @@ impl SurrealFlutterEngine {
             Some(config) => {
                 // let in_config = cbor::decode(&config.to_vec())?;
                 // let config = Config::try_from(&in_config)?;
+                let session_lock = engine.get_session(&session)?;
+                let session = session_lock.read().await;
                 engine
                     .kvs
-                    .export_with_config(engine.get_session(session.as_ref()).as_ref(), tx, config)
+                    .export_with_config(&session, tx, config)
                     .await?
                     .await?;
             }
             None => {
-                engine
-                    .kvs
-                    .export(engine.get_session(session.as_ref()).as_ref(), tx)
-                    .await?
-                    .await?;
+                let session_lock = engine.get_session(&session)?;
+                let session = session_lock.read().await;
+                engine.kvs.export(&session, tx).await?.await?;
             }
         };
 
@@ -222,10 +226,9 @@ impl SurrealFlutterEngine {
     pub async fn import(&self, input: String, session: Option<Vec<u8>>) -> Result<()> {
         let engine = self.0.read().await;
         let session = session.map(|s| Uuid::from_slice(&s)).transpose()?;
-        engine
-            .kvs
-            .import(&input, engine.get_session(session.as_ref()).as_ref())
-            .await?;
+        let session_lock = engine.get_session(&session)?;
+        let session = session_lock.read().await;
+        engine.kvs.import(&input, &session).await?;
 
         Ok(())
     }
@@ -234,7 +237,7 @@ impl SurrealFlutterEngine {
         let engine = self.0.read().await;
         let id = Uuid::new_v4();
         let session = Session::default().with_rt(true);
-        let session = Arc::new(session);
+        let session = Arc::new(RwLock::new(session));
         engine.set_session(Some(id), session);
         id.as_bytes().to_vec()
     }
@@ -242,9 +245,9 @@ impl SurrealFlutterEngine {
     pub async fn fork_session(&self, id: Vec<u8>) -> Result<Vec<u8>> {
         let engine = self.0.read().await;
         let id = Uuid::from_slice(&id)?;
-        let session = engine.get_session(Some(&id));
-        let session = (*session).clone();
-        let session = Arc::new(session);
+        let session_lock = engine.get_session(&Some(id))?;
+        let session = session_lock.read().await.clone();
+        let session = Arc::new(RwLock::new(session));
         let new_id = Uuid::new_v4();
         engine.set_session(Some(new_id), session);
         Ok(new_id.as_bytes().to_vec())
@@ -253,7 +256,7 @@ impl SurrealFlutterEngine {
     pub async fn close_session(&self, id: Vec<u8>) -> Result<()> {
         let engine = self.0.read().await;
         let id = Uuid::from_slice(&id)?;
-        engine.del_session(&id);
+        engine.del_session(&id).await;
         Ok(())
     }
 

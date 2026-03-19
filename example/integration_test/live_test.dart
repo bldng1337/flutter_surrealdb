@@ -18,6 +18,7 @@ void dotest() {
     setUp(() async {
       db = await SurrealDB.connect("mem://");
       await db.use(db: "test", ns: "test");
+      await db.query("DEFINE TABLE IF NOT EXISTS ${testTable.tb}");
       await db.delete(testTable);
     });
 
@@ -163,6 +164,9 @@ void dotest() {
     test('should handle multiple concurrent live queries', () async {
       const table1 = DBTable('live_test_1');
       const table2 = DBTable('live_test_2');
+
+      await db.query("DEFINE TABLE IF NOT EXISTS ${table1.tb}");
+      await db.query("DEFINE TABLE IF NOT EXISTS ${table2.tb}");
 
       final notifications1 = <Notification>[];
       final notifications2 = <Notification>[];

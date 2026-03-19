@@ -179,6 +179,7 @@ void dotest() {
 
     test('should select from empty table', () async {
       const table = DBTable('empty_table');
+      await db.query("DEFINE TABLE IF NOT EXISTS ${table.tb}");
       final result = await db.select(table);
 
       expect(result, isA<List>());
