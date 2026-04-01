@@ -504,6 +504,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  ExcludedTables dco_decode_box_autoadd_excluded_tables(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_excluded_tables(raw);
+  }
+
+  @protected
   Options dco_decode_box_autoadd_options(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_options(raw);
@@ -552,18 +558,22 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Config dco_decode_config(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 9)
-      throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
+    if (arr.length != 13)
+      throw Exception('unexpected arr length: expect 13 but see ${arr.length}');
     return Config(
       users: dco_decode_bool(arr[0]),
       accesses: dco_decode_bool(arr[1]),
       params: dco_decode_bool(arr[2]),
       functions: dco_decode_bool(arr[3]),
       analyzers: dco_decode_bool(arr[4]),
-      tables: dco_decode_table_config(arr[5]),
-      versions: dco_decode_bool(arr[6]),
-      records: dco_decode_bool(arr[7]),
-      sequences: dco_decode_bool(arr[8]),
+      apis: dco_decode_bool(arr[5]),
+      buckets: dco_decode_bool(arr[6]),
+      modules: dco_decode_bool(arr[7]),
+      configs: dco_decode_bool(arr[8]),
+      tables: dco_decode_table_config(arr[9]),
+      versions: dco_decode_bool(arr[10]),
+      records: dco_decode_bool(arr[11]),
+      sequences: dco_decode_bool(arr[12]),
     );
   }
 
@@ -578,6 +588,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       action: dco_decode_action(arr[1]),
       record: dco_decode_list_prim_u_8_strict(arr[2]),
       result: dco_decode_list_prim_u_8_strict(arr[3]),
+    );
+  }
+
+  @protected
+  ExcludedTables dco_decode_excluded_tables(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 1)
+      throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
+    return ExcludedTables(
+      exclude: dco_decode_list_String(arr[0]),
     );
   }
 
@@ -684,6 +705,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       case 2:
         return TableConfig_Some(
           dco_decode_list_String(raw[1]),
+        );
+      case 3:
+        return TableConfig_Exclude(
+          dco_decode_box_autoadd_excluded_tables(raw[1]),
         );
       default:
         throw Exception("unreachable");
@@ -835,6 +860,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  ExcludedTables sse_decode_box_autoadd_excluded_tables(
+      SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_excluded_tables(deserializer));
+  }
+
+  @protected
   Options sse_decode_box_autoadd_options(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_options(deserializer));
@@ -896,6 +928,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_params = sse_decode_bool(deserializer);
     var var_functions = sse_decode_bool(deserializer);
     var var_analyzers = sse_decode_bool(deserializer);
+    var var_apis = sse_decode_bool(deserializer);
+    var var_buckets = sse_decode_bool(deserializer);
+    var var_modules = sse_decode_bool(deserializer);
+    var var_configs = sse_decode_bool(deserializer);
     var var_tables = sse_decode_table_config(deserializer);
     var var_versions = sse_decode_bool(deserializer);
     var var_records = sse_decode_bool(deserializer);
@@ -906,6 +942,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         params: var_params,
         functions: var_functions,
         analyzers: var_analyzers,
+        apis: var_apis,
+        buckets: var_buckets,
+        modules: var_modules,
+        configs: var_configs,
         tables: var_tables,
         versions: var_versions,
         records: var_records,
@@ -921,6 +961,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_result = sse_decode_list_prim_u_8_strict(deserializer);
     return DBNotification(
         id: var_id, action: var_action, record: var_record, result: var_result);
+  }
+
+  @protected
+  ExcludedTables sse_decode_excluded_tables(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_exclude = sse_decode_list_String(deserializer);
+    return ExcludedTables(exclude: var_exclude);
   }
 
   @protected
@@ -1078,6 +1125,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       case 2:
         var var_field0 = sse_decode_list_String(deserializer);
         return TableConfig_Some(var_field0);
+      case 3:
+        var var_field0 = sse_decode_box_autoadd_excluded_tables(deserializer);
+        return TableConfig_Exclude(var_field0);
       default:
         throw UnimplementedError('');
     }
@@ -1232,6 +1282,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_excluded_tables(
+      ExcludedTables self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_excluded_tables(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_options(Options self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_options(self, serializer);
@@ -1288,6 +1345,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_bool(self.params, serializer);
     sse_encode_bool(self.functions, serializer);
     sse_encode_bool(self.analyzers, serializer);
+    sse_encode_bool(self.apis, serializer);
+    sse_encode_bool(self.buckets, serializer);
+    sse_encode_bool(self.modules, serializer);
+    sse_encode_bool(self.configs, serializer);
     sse_encode_table_config(self.tables, serializer);
     sse_encode_bool(self.versions, serializer);
     sse_encode_bool(self.records, serializer);
@@ -1302,6 +1363,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_action(self.action, serializer);
     sse_encode_list_prim_u_8_strict(self.record, serializer);
     sse_encode_list_prim_u_8_strict(self.result, serializer);
+  }
+
+  @protected
+  void sse_encode_excluded_tables(
+      ExcludedTables self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_String(self.exclude, serializer);
   }
 
   @protected
@@ -1448,6 +1516,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       case TableConfig_Some(field0: final field0):
         sse_encode_i_32(2, serializer);
         sse_encode_list_String(field0, serializer);
+      case TableConfig_Exclude(field0: final field0):
+        sse_encode_i_32(3, serializer);
+        sse_encode_box_autoadd_excluded_tables(field0, serializer);
     }
   }
 

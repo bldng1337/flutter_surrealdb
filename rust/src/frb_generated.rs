@@ -592,16 +592,27 @@ const _: fn() = || {
         let _: bool = Config.params;
         let _: bool = Config.functions;
         let _: bool = Config.analyzers;
+        let _: bool = Config.apis;
+        let _: bool = Config.buckets;
+        let _: bool = Config.modules;
+        let _: bool = Config.configs;
         let _: crate::api::engine::TableConfig = Config.tables;
         let _: bool = Config.versions;
         let _: bool = Config.records;
         let _: bool = Config.sequences;
+    }
+    {
+        let ExcludedTables = None::<crate::api::engine::ExcludedTables>.unwrap();
+        let _: Vec<String> = ExcludedTables.exclude;
     }
     match None::<crate::api::engine::TableConfig>.unwrap() {
         crate::api::engine::TableConfig::All => {}
         crate::api::engine::TableConfig::None => {}
         crate::api::engine::TableConfig::Some(field0) => {
             let _: Vec<String> = field0;
+        }
+        crate::api::engine::TableConfig::Exclude(field0) => {
+            let _: crate::api::engine::ExcludedTables = field0;
         }
     }
 };
@@ -729,6 +740,10 @@ impl SseDecode for crate::api::engine::Config {
         let mut var_params = <bool>::sse_decode(deserializer);
         let mut var_functions = <bool>::sse_decode(deserializer);
         let mut var_analyzers = <bool>::sse_decode(deserializer);
+        let mut var_apis = <bool>::sse_decode(deserializer);
+        let mut var_buckets = <bool>::sse_decode(deserializer);
+        let mut var_modules = <bool>::sse_decode(deserializer);
+        let mut var_configs = <bool>::sse_decode(deserializer);
         let mut var_tables = <crate::api::engine::TableConfig>::sse_decode(deserializer);
         let mut var_versions = <bool>::sse_decode(deserializer);
         let mut var_records = <bool>::sse_decode(deserializer);
@@ -739,6 +754,10 @@ impl SseDecode for crate::api::engine::Config {
             params: var_params,
             functions: var_functions,
             analyzers: var_analyzers,
+            apis: var_apis,
+            buckets: var_buckets,
+            modules: var_modules,
+            configs: var_configs,
             tables: var_tables,
             versions: var_versions,
             records: var_records,
@@ -759,6 +778,16 @@ impl SseDecode for crate::api::engine::DBNotification {
             action: var_action,
             record: var_record,
             result: var_result,
+        };
+    }
+}
+
+impl SseDecode for crate::api::engine::ExcludedTables {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_exclude = <Vec<String>>::sse_decode(deserializer);
+        return crate::api::engine::ExcludedTables {
+            exclude: var_exclude,
         };
     }
 }
@@ -806,25 +835,33 @@ impl SseDecode for crate::api::engine::Method {
             4 => crate::api::engine::Method::Signup,
             5 => crate::api::engine::Method::Signin,
             6 => crate::api::engine::Method::Authenticate,
-            7 => crate::api::engine::Method::Invalidate,
-            8 => crate::api::engine::Method::Reset,
-            9 => crate::api::engine::Method::Kill,
-            10 => crate::api::engine::Method::Live,
-            11 => crate::api::engine::Method::Set,
-            12 => crate::api::engine::Method::Unset,
-            13 => crate::api::engine::Method::Select,
-            14 => crate::api::engine::Method::Insert,
-            15 => crate::api::engine::Method::Create,
-            16 => crate::api::engine::Method::Upsert,
-            17 => crate::api::engine::Method::Update,
-            18 => crate::api::engine::Method::Merge,
-            19 => crate::api::engine::Method::Patch,
-            20 => crate::api::engine::Method::Delete,
-            21 => crate::api::engine::Method::Version,
-            22 => crate::api::engine::Method::Query,
-            23 => crate::api::engine::Method::Relate,
-            24 => crate::api::engine::Method::Run,
-            25 => crate::api::engine::Method::InsertRelation,
+            7 => crate::api::engine::Method::Refresh,
+            8 => crate::api::engine::Method::Invalidate,
+            9 => crate::api::engine::Method::Revoke,
+            10 => crate::api::engine::Method::Reset,
+            11 => crate::api::engine::Method::Kill,
+            12 => crate::api::engine::Method::Live,
+            13 => crate::api::engine::Method::Set,
+            14 => crate::api::engine::Method::Unset,
+            15 => crate::api::engine::Method::Select,
+            16 => crate::api::engine::Method::Insert,
+            17 => crate::api::engine::Method::Create,
+            18 => crate::api::engine::Method::Upsert,
+            19 => crate::api::engine::Method::Update,
+            20 => crate::api::engine::Method::Merge,
+            21 => crate::api::engine::Method::Patch,
+            22 => crate::api::engine::Method::Delete,
+            23 => crate::api::engine::Method::Version,
+            24 => crate::api::engine::Method::Query,
+            25 => crate::api::engine::Method::Relate,
+            26 => crate::api::engine::Method::Run,
+            27 => crate::api::engine::Method::InsertRelation,
+            28 => crate::api::engine::Method::Attach,
+            29 => crate::api::engine::Method::Sessions,
+            30 => crate::api::engine::Method::Detach,
+            31 => crate::api::engine::Method::Begin,
+            32 => crate::api::engine::Method::Commit,
+            33 => crate::api::engine::Method::Cancel,
             _ => unreachable!("Invalid variant for Method: {}", inner),
         };
     }
@@ -951,6 +988,10 @@ impl SseDecode for crate::api::engine::TableConfig {
             2 => {
                 let mut var_field0 = <Vec<String>>::sse_decode(deserializer);
                 return crate::api::engine::TableConfig::Some(var_field0);
+            }
+            3 => {
+                let mut var_field0 = <crate::api::engine::ExcludedTables>::sse_decode(deserializer);
+                return crate::api::engine::TableConfig::Exclude(var_field0);
             }
             _ => {
                 unimplemented!("");
@@ -1191,6 +1232,10 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::engine::Config> {
             self.0.params.into_into_dart().into_dart(),
             self.0.functions.into_into_dart().into_dart(),
             self.0.analyzers.into_into_dart().into_dart(),
+            self.0.apis.into_into_dart().into_dart(),
+            self.0.buckets.into_into_dart().into_dart(),
+            self.0.modules.into_into_dart().into_dart(),
+            self.0.configs.into_into_dart().into_dart(),
             self.0.tables.into_into_dart().into_dart(),
             self.0.versions.into_into_dart().into_dart(),
             self.0.records.into_into_dart().into_dart(),
@@ -1234,6 +1279,23 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::engine::DBNotification>
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::engine::ExcludedTables> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [self.0.exclude.into_into_dart().into_dart()].into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for FrbWrapper<crate::api::engine::ExcludedTables>
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::engine::ExcludedTables>>
+    for crate::api::engine::ExcludedTables
+{
+    fn into_into_dart(self) -> FrbWrapper<crate::api::engine::ExcludedTables> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::engine::Method> {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         match self.0 {
@@ -1244,25 +1306,33 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::engine::Method> {
             crate::api::engine::Method::Signup => 4.into_dart(),
             crate::api::engine::Method::Signin => 5.into_dart(),
             crate::api::engine::Method::Authenticate => 6.into_dart(),
-            crate::api::engine::Method::Invalidate => 7.into_dart(),
-            crate::api::engine::Method::Reset => 8.into_dart(),
-            crate::api::engine::Method::Kill => 9.into_dart(),
-            crate::api::engine::Method::Live => 10.into_dart(),
-            crate::api::engine::Method::Set => 11.into_dart(),
-            crate::api::engine::Method::Unset => 12.into_dart(),
-            crate::api::engine::Method::Select => 13.into_dart(),
-            crate::api::engine::Method::Insert => 14.into_dart(),
-            crate::api::engine::Method::Create => 15.into_dart(),
-            crate::api::engine::Method::Upsert => 16.into_dart(),
-            crate::api::engine::Method::Update => 17.into_dart(),
-            crate::api::engine::Method::Merge => 18.into_dart(),
-            crate::api::engine::Method::Patch => 19.into_dart(),
-            crate::api::engine::Method::Delete => 20.into_dart(),
-            crate::api::engine::Method::Version => 21.into_dart(),
-            crate::api::engine::Method::Query => 22.into_dart(),
-            crate::api::engine::Method::Relate => 23.into_dart(),
-            crate::api::engine::Method::Run => 24.into_dart(),
-            crate::api::engine::Method::InsertRelation => 25.into_dart(),
+            crate::api::engine::Method::Refresh => 7.into_dart(),
+            crate::api::engine::Method::Invalidate => 8.into_dart(),
+            crate::api::engine::Method::Revoke => 9.into_dart(),
+            crate::api::engine::Method::Reset => 10.into_dart(),
+            crate::api::engine::Method::Kill => 11.into_dart(),
+            crate::api::engine::Method::Live => 12.into_dart(),
+            crate::api::engine::Method::Set => 13.into_dart(),
+            crate::api::engine::Method::Unset => 14.into_dart(),
+            crate::api::engine::Method::Select => 15.into_dart(),
+            crate::api::engine::Method::Insert => 16.into_dart(),
+            crate::api::engine::Method::Create => 17.into_dart(),
+            crate::api::engine::Method::Upsert => 18.into_dart(),
+            crate::api::engine::Method::Update => 19.into_dart(),
+            crate::api::engine::Method::Merge => 20.into_dart(),
+            crate::api::engine::Method::Patch => 21.into_dart(),
+            crate::api::engine::Method::Delete => 22.into_dart(),
+            crate::api::engine::Method::Version => 23.into_dart(),
+            crate::api::engine::Method::Query => 24.into_dart(),
+            crate::api::engine::Method::Relate => 25.into_dart(),
+            crate::api::engine::Method::Run => 26.into_dart(),
+            crate::api::engine::Method::InsertRelation => 27.into_dart(),
+            crate::api::engine::Method::Attach => 28.into_dart(),
+            crate::api::engine::Method::Sessions => 29.into_dart(),
+            crate::api::engine::Method::Detach => 30.into_dart(),
+            crate::api::engine::Method::Begin => 31.into_dart(),
+            crate::api::engine::Method::Commit => 32.into_dart(),
+            crate::api::engine::Method::Cancel => 33.into_dart(),
             _ => unreachable!(),
         }
     }
@@ -1305,6 +1375,9 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::engine::TableConfi
             crate::api::engine::TableConfig::None => [1.into_dart()].into_dart(),
             crate::api::engine::TableConfig::Some(field0) => {
                 [2.into_dart(), field0.into_into_dart().into_dart()].into_dart()
+            }
+            crate::api::engine::TableConfig::Exclude(field0) => {
+                [3.into_dart(), field0.into_into_dart().into_dart()].into_dart()
             }
             _ => {
                 unimplemented!("");
@@ -1496,6 +1569,10 @@ impl SseEncode for crate::api::engine::Config {
         <bool>::sse_encode(self.params, serializer);
         <bool>::sse_encode(self.functions, serializer);
         <bool>::sse_encode(self.analyzers, serializer);
+        <bool>::sse_encode(self.apis, serializer);
+        <bool>::sse_encode(self.buckets, serializer);
+        <bool>::sse_encode(self.modules, serializer);
+        <bool>::sse_encode(self.configs, serializer);
         <crate::api::engine::TableConfig>::sse_encode(self.tables, serializer);
         <bool>::sse_encode(self.versions, serializer);
         <bool>::sse_encode(self.records, serializer);
@@ -1510,6 +1587,13 @@ impl SseEncode for crate::api::engine::DBNotification {
         <crate::api::engine::Action>::sse_encode(self.action, serializer);
         <Vec<u8>>::sse_encode(self.record, serializer);
         <Vec<u8>>::sse_encode(self.result, serializer);
+    }
+}
+
+impl SseEncode for crate::api::engine::ExcludedTables {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <Vec<String>>::sse_encode(self.exclude, serializer);
     }
 }
 
@@ -1552,25 +1636,33 @@ impl SseEncode for crate::api::engine::Method {
                 crate::api::engine::Method::Signup => 4,
                 crate::api::engine::Method::Signin => 5,
                 crate::api::engine::Method::Authenticate => 6,
-                crate::api::engine::Method::Invalidate => 7,
-                crate::api::engine::Method::Reset => 8,
-                crate::api::engine::Method::Kill => 9,
-                crate::api::engine::Method::Live => 10,
-                crate::api::engine::Method::Set => 11,
-                crate::api::engine::Method::Unset => 12,
-                crate::api::engine::Method::Select => 13,
-                crate::api::engine::Method::Insert => 14,
-                crate::api::engine::Method::Create => 15,
-                crate::api::engine::Method::Upsert => 16,
-                crate::api::engine::Method::Update => 17,
-                crate::api::engine::Method::Merge => 18,
-                crate::api::engine::Method::Patch => 19,
-                crate::api::engine::Method::Delete => 20,
-                crate::api::engine::Method::Version => 21,
-                crate::api::engine::Method::Query => 22,
-                crate::api::engine::Method::Relate => 23,
-                crate::api::engine::Method::Run => 24,
-                crate::api::engine::Method::InsertRelation => 25,
+                crate::api::engine::Method::Refresh => 7,
+                crate::api::engine::Method::Invalidate => 8,
+                crate::api::engine::Method::Revoke => 9,
+                crate::api::engine::Method::Reset => 10,
+                crate::api::engine::Method::Kill => 11,
+                crate::api::engine::Method::Live => 12,
+                crate::api::engine::Method::Set => 13,
+                crate::api::engine::Method::Unset => 14,
+                crate::api::engine::Method::Select => 15,
+                crate::api::engine::Method::Insert => 16,
+                crate::api::engine::Method::Create => 17,
+                crate::api::engine::Method::Upsert => 18,
+                crate::api::engine::Method::Update => 19,
+                crate::api::engine::Method::Merge => 20,
+                crate::api::engine::Method::Patch => 21,
+                crate::api::engine::Method::Delete => 22,
+                crate::api::engine::Method::Version => 23,
+                crate::api::engine::Method::Query => 24,
+                crate::api::engine::Method::Relate => 25,
+                crate::api::engine::Method::Run => 26,
+                crate::api::engine::Method::InsertRelation => 27,
+                crate::api::engine::Method::Attach => 28,
+                crate::api::engine::Method::Sessions => 29,
+                crate::api::engine::Method::Detach => 30,
+                crate::api::engine::Method::Begin => 31,
+                crate::api::engine::Method::Commit => 32,
+                crate::api::engine::Method::Cancel => 33,
                 _ => {
                     unimplemented!("");
                 }
@@ -1685,6 +1777,10 @@ impl SseEncode for crate::api::engine::TableConfig {
             crate::api::engine::TableConfig::Some(field0) => {
                 <i32>::sse_encode(2, serializer);
                 <Vec<String>>::sse_encode(field0, serializer);
+            }
+            crate::api::engine::TableConfig::Exclude(field0) => {
+                <i32>::sse_encode(3, serializer);
+                <crate::api::engine::ExcludedTables>::sse_encode(field0, serializer);
             }
             _ => {
                 unimplemented!("");

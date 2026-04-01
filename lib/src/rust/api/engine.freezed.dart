@@ -21,6 +21,7 @@ mixin _$TableConfig {
     required TResult Function() all,
     required TResult Function() none,
     required TResult Function(List<String> field0) some,
+    required TResult Function(ExcludedTables field0) exclude,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -28,6 +29,7 @@ mixin _$TableConfig {
     TResult? Function()? all,
     TResult? Function()? none,
     TResult? Function(List<String> field0)? some,
+    TResult? Function(ExcludedTables field0)? exclude,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -35,6 +37,7 @@ mixin _$TableConfig {
     TResult Function()? all,
     TResult Function()? none,
     TResult Function(List<String> field0)? some,
+    TResult Function(ExcludedTables field0)? exclude,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -43,6 +46,7 @@ mixin _$TableConfig {
     required TResult Function(TableConfig_All value) all,
     required TResult Function(TableConfig_None value) none,
     required TResult Function(TableConfig_Some value) some,
+    required TResult Function(TableConfig_Exclude value) exclude,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -50,6 +54,7 @@ mixin _$TableConfig {
     TResult? Function(TableConfig_All value)? all,
     TResult? Function(TableConfig_None value)? none,
     TResult? Function(TableConfig_Some value)? some,
+    TResult? Function(TableConfig_Exclude value)? exclude,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -57,6 +62,7 @@ mixin _$TableConfig {
     TResult Function(TableConfig_All value)? all,
     TResult Function(TableConfig_None value)? none,
     TResult Function(TableConfig_Some value)? some,
+    TResult Function(TableConfig_Exclude value)? exclude,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -127,6 +133,7 @@ class _$TableConfig_AllImpl extends TableConfig_All {
     required TResult Function() all,
     required TResult Function() none,
     required TResult Function(List<String> field0) some,
+    required TResult Function(ExcludedTables field0) exclude,
   }) {
     return all();
   }
@@ -137,6 +144,7 @@ class _$TableConfig_AllImpl extends TableConfig_All {
     TResult? Function()? all,
     TResult? Function()? none,
     TResult? Function(List<String> field0)? some,
+    TResult? Function(ExcludedTables field0)? exclude,
   }) {
     return all?.call();
   }
@@ -147,6 +155,7 @@ class _$TableConfig_AllImpl extends TableConfig_All {
     TResult Function()? all,
     TResult Function()? none,
     TResult Function(List<String> field0)? some,
+    TResult Function(ExcludedTables field0)? exclude,
     required TResult orElse(),
   }) {
     if (all != null) {
@@ -161,6 +170,7 @@ class _$TableConfig_AllImpl extends TableConfig_All {
     required TResult Function(TableConfig_All value) all,
     required TResult Function(TableConfig_None value) none,
     required TResult Function(TableConfig_Some value) some,
+    required TResult Function(TableConfig_Exclude value) exclude,
   }) {
     return all(this);
   }
@@ -171,6 +181,7 @@ class _$TableConfig_AllImpl extends TableConfig_All {
     TResult? Function(TableConfig_All value)? all,
     TResult? Function(TableConfig_None value)? none,
     TResult? Function(TableConfig_Some value)? some,
+    TResult? Function(TableConfig_Exclude value)? exclude,
   }) {
     return all?.call(this);
   }
@@ -181,6 +192,7 @@ class _$TableConfig_AllImpl extends TableConfig_All {
     TResult Function(TableConfig_All value)? all,
     TResult Function(TableConfig_None value)? none,
     TResult Function(TableConfig_Some value)? some,
+    TResult Function(TableConfig_Exclude value)? exclude,
     required TResult orElse(),
   }) {
     if (all != null) {
@@ -239,6 +251,7 @@ class _$TableConfig_NoneImpl extends TableConfig_None {
     required TResult Function() all,
     required TResult Function() none,
     required TResult Function(List<String> field0) some,
+    required TResult Function(ExcludedTables field0) exclude,
   }) {
     return none();
   }
@@ -249,6 +262,7 @@ class _$TableConfig_NoneImpl extends TableConfig_None {
     TResult? Function()? all,
     TResult? Function()? none,
     TResult? Function(List<String> field0)? some,
+    TResult? Function(ExcludedTables field0)? exclude,
   }) {
     return none?.call();
   }
@@ -259,6 +273,7 @@ class _$TableConfig_NoneImpl extends TableConfig_None {
     TResult Function()? all,
     TResult Function()? none,
     TResult Function(List<String> field0)? some,
+    TResult Function(ExcludedTables field0)? exclude,
     required TResult orElse(),
   }) {
     if (none != null) {
@@ -273,6 +288,7 @@ class _$TableConfig_NoneImpl extends TableConfig_None {
     required TResult Function(TableConfig_All value) all,
     required TResult Function(TableConfig_None value) none,
     required TResult Function(TableConfig_Some value) some,
+    required TResult Function(TableConfig_Exclude value) exclude,
   }) {
     return none(this);
   }
@@ -283,6 +299,7 @@ class _$TableConfig_NoneImpl extends TableConfig_None {
     TResult? Function(TableConfig_All value)? all,
     TResult? Function(TableConfig_None value)? none,
     TResult? Function(TableConfig_Some value)? some,
+    TResult? Function(TableConfig_Exclude value)? exclude,
   }) {
     return none?.call(this);
   }
@@ -293,6 +310,7 @@ class _$TableConfig_NoneImpl extends TableConfig_None {
     TResult Function(TableConfig_All value)? all,
     TResult Function(TableConfig_None value)? none,
     TResult Function(TableConfig_Some value)? some,
+    TResult Function(TableConfig_Exclude value)? exclude,
     required TResult orElse(),
   }) {
     if (none != null) {
@@ -387,6 +405,7 @@ class _$TableConfig_SomeImpl extends TableConfig_Some {
     required TResult Function() all,
     required TResult Function() none,
     required TResult Function(List<String> field0) some,
+    required TResult Function(ExcludedTables field0) exclude,
   }) {
     return some(field0);
   }
@@ -397,6 +416,7 @@ class _$TableConfig_SomeImpl extends TableConfig_Some {
     TResult? Function()? all,
     TResult? Function()? none,
     TResult? Function(List<String> field0)? some,
+    TResult? Function(ExcludedTables field0)? exclude,
   }) {
     return some?.call(field0);
   }
@@ -407,6 +427,7 @@ class _$TableConfig_SomeImpl extends TableConfig_Some {
     TResult Function()? all,
     TResult Function()? none,
     TResult Function(List<String> field0)? some,
+    TResult Function(ExcludedTables field0)? exclude,
     required TResult orElse(),
   }) {
     if (some != null) {
@@ -421,6 +442,7 @@ class _$TableConfig_SomeImpl extends TableConfig_Some {
     required TResult Function(TableConfig_All value) all,
     required TResult Function(TableConfig_None value) none,
     required TResult Function(TableConfig_Some value) some,
+    required TResult Function(TableConfig_Exclude value) exclude,
   }) {
     return some(this);
   }
@@ -431,6 +453,7 @@ class _$TableConfig_SomeImpl extends TableConfig_Some {
     TResult? Function(TableConfig_All value)? all,
     TResult? Function(TableConfig_None value)? none,
     TResult? Function(TableConfig_Some value)? some,
+    TResult? Function(TableConfig_Exclude value)? exclude,
   }) {
     return some?.call(this);
   }
@@ -441,6 +464,7 @@ class _$TableConfig_SomeImpl extends TableConfig_Some {
     TResult Function(TableConfig_All value)? all,
     TResult Function(TableConfig_None value)? none,
     TResult Function(TableConfig_Some value)? some,
+    TResult Function(TableConfig_Exclude value)? exclude,
     required TResult orElse(),
   }) {
     if (some != null) {
@@ -461,5 +485,160 @@ abstract class TableConfig_Some extends TableConfig {
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$TableConfig_SomeImplCopyWith<_$TableConfig_SomeImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$TableConfig_ExcludeImplCopyWith<$Res> {
+  factory _$$TableConfig_ExcludeImplCopyWith(_$TableConfig_ExcludeImpl value,
+          $Res Function(_$TableConfig_ExcludeImpl) then) =
+      __$$TableConfig_ExcludeImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({ExcludedTables field0});
+}
+
+/// @nodoc
+class __$$TableConfig_ExcludeImplCopyWithImpl<$Res>
+    extends _$TableConfigCopyWithImpl<$Res, _$TableConfig_ExcludeImpl>
+    implements _$$TableConfig_ExcludeImplCopyWith<$Res> {
+  __$$TableConfig_ExcludeImplCopyWithImpl(_$TableConfig_ExcludeImpl _value,
+      $Res Function(_$TableConfig_ExcludeImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of TableConfig
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? field0 = null,
+  }) {
+    return _then(_$TableConfig_ExcludeImpl(
+      null == field0
+          ? _value.field0
+          : field0 // ignore: cast_nullable_to_non_nullable
+              as ExcludedTables,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$TableConfig_ExcludeImpl extends TableConfig_Exclude {
+  const _$TableConfig_ExcludeImpl(this.field0) : super._();
+
+  @override
+  final ExcludedTables field0;
+
+  @override
+  String toString() {
+    return 'TableConfig.exclude(field0: $field0)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$TableConfig_ExcludeImpl &&
+            (identical(other.field0, field0) || other.field0 == field0));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, field0);
+
+  /// Create a copy of TableConfig
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$TableConfig_ExcludeImplCopyWith<_$TableConfig_ExcludeImpl> get copyWith =>
+      __$$TableConfig_ExcludeImplCopyWithImpl<_$TableConfig_ExcludeImpl>(
+          this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function() all,
+    required TResult Function() none,
+    required TResult Function(List<String> field0) some,
+    required TResult Function(ExcludedTables field0) exclude,
+  }) {
+    return exclude(field0);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function()? all,
+    TResult? Function()? none,
+    TResult? Function(List<String> field0)? some,
+    TResult? Function(ExcludedTables field0)? exclude,
+  }) {
+    return exclude?.call(field0);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function()? all,
+    TResult Function()? none,
+    TResult Function(List<String> field0)? some,
+    TResult Function(ExcludedTables field0)? exclude,
+    required TResult orElse(),
+  }) {
+    if (exclude != null) {
+      return exclude(field0);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(TableConfig_All value) all,
+    required TResult Function(TableConfig_None value) none,
+    required TResult Function(TableConfig_Some value) some,
+    required TResult Function(TableConfig_Exclude value) exclude,
+  }) {
+    return exclude(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(TableConfig_All value)? all,
+    TResult? Function(TableConfig_None value)? none,
+    TResult? Function(TableConfig_Some value)? some,
+    TResult? Function(TableConfig_Exclude value)? exclude,
+  }) {
+    return exclude?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(TableConfig_All value)? all,
+    TResult Function(TableConfig_None value)? none,
+    TResult Function(TableConfig_Some value)? some,
+    TResult Function(TableConfig_Exclude value)? exclude,
+    required TResult orElse(),
+  }) {
+    if (exclude != null) {
+      return exclude(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class TableConfig_Exclude extends TableConfig {
+  const factory TableConfig_Exclude(final ExcludedTables field0) =
+      _$TableConfig_ExcludeImpl;
+  const TableConfig_Exclude._() : super._();
+
+  ExcludedTables get field0;
+
+  /// Create a copy of TableConfig
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$TableConfig_ExcludeImplCopyWith<_$TableConfig_ExcludeImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

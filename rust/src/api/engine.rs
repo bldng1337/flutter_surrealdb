@@ -5,7 +5,7 @@ use tokio::sync::RwLock;
 use uuid::Uuid;
 
 use surrealdb_core::dbs::Session;
-pub use surrealdb_core::kvs::export::{Config, TableConfig};
+pub use surrealdb_core::kvs::export::{Config, ExcludedTables, TableConfig};
 use surrealdb_core::kvs::Datastore;
 use surrealdb_core::rpc::format::cbor;
 pub use surrealdb_core::rpc::Method;
@@ -28,10 +28,19 @@ pub struct _Config {
     pub params: bool,
     pub functions: bool,
     pub analyzers: bool,
+    pub apis: bool,
+    pub buckets: bool,
+    pub modules: bool,
+    pub configs: bool,
     pub tables: TableConfig,
     pub versions: bool,
     pub records: bool,
     pub sequences: bool,
+}
+
+#[frb(mirror(ExcludedTables))]
+pub struct _ExcludedTables {
+    pub exclude: Vec<String>,
 }
 
 #[frb(mirror(TableConfig))]
@@ -39,6 +48,7 @@ pub enum _TableConfig {
     All,
     None,
     Some(Vec<String>),
+    Exclude(ExcludedTables),
 }
 
 #[frb(mirror(Method))]
@@ -180,7 +190,7 @@ impl SurrealFlutterEngine {
         };
 
         let session = Session::default().with_rt(true);
-        let mut sessions = HashMap::new();
+        let sessions = HashMap::new();
         sessions.insert(None, Arc::new(RwLock::new(session)));
         let connection = SurrealFlutterConnection {
             kvs: Arc::new(kvs),

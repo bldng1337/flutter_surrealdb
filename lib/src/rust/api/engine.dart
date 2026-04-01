@@ -53,6 +53,10 @@ class Config {
   final bool params;
   final bool functions;
   final bool analyzers;
+  final bool apis;
+  final bool buckets;
+  final bool modules;
+  final bool configs;
   final TableConfig tables;
   final bool versions;
   final bool records;
@@ -64,6 +68,10 @@ class Config {
     required this.params,
     required this.functions,
     required this.analyzers,
+    required this.apis,
+    required this.buckets,
+    required this.modules,
+    required this.configs,
     required this.tables,
     required this.versions,
     required this.records,
@@ -77,6 +85,10 @@ class Config {
       params.hashCode ^
       functions.hashCode ^
       analyzers.hashCode ^
+      apis.hashCode ^
+      buckets.hashCode ^
+      modules.hashCode ^
+      configs.hashCode ^
       tables.hashCode ^
       versions.hashCode ^
       records.hashCode ^
@@ -92,6 +104,10 @@ class Config {
           params == other.params &&
           functions == other.functions &&
           analyzers == other.analyzers &&
+          apis == other.apis &&
+          buckets == other.buckets &&
+          modules == other.modules &&
+          configs == other.configs &&
           tables == other.tables &&
           versions == other.versions &&
           records == other.records &&
@@ -126,6 +142,24 @@ class DBNotification {
           result == other.result;
 }
 
+class ExcludedTables {
+  final List<String> exclude;
+
+  const ExcludedTables({
+    required this.exclude,
+  });
+
+  @override
+  int get hashCode => exclude.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ExcludedTables &&
+          runtimeType == other.runtimeType &&
+          exclude == other.exclude;
+}
+
 enum Method {
   unknown,
   ping,
@@ -134,7 +168,9 @@ enum Method {
   signup,
   signin,
   authenticate,
+  refresh,
   invalidate,
+  revoke,
   reset,
   kill,
   live,
@@ -153,6 +189,12 @@ enum Method {
   relate,
   run,
   insertRelation,
+  attach,
+  sessions,
+  detach,
+  begin,
+  commit,
+  cancel,
   ;
 }
 
@@ -165,4 +207,7 @@ sealed class TableConfig with _$TableConfig {
   const factory TableConfig.some(
     List<String> field0,
   ) = TableConfig_Some;
+  const factory TableConfig.exclude(
+    ExcludedTables field0,
+  ) = TableConfig_Exclude;
 }

@@ -69,6 +69,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Config dco_decode_box_autoadd_config(dynamic raw);
 
   @protected
+  ExcludedTables dco_decode_box_autoadd_excluded_tables(dynamic raw);
+
+  @protected
   Options dco_decode_box_autoadd_options(dynamic raw);
 
   @protected
@@ -88,6 +91,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   DBNotification dco_decode_db_notification(dynamic raw);
+
+  @protected
+  ExcludedTables dco_decode_excluded_tables(dynamic raw);
 
   @protected
   int dco_decode_i_32(dynamic raw);
@@ -195,6 +201,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Config sse_decode_box_autoadd_config(SseDeserializer deserializer);
 
   @protected
+  ExcludedTables sse_decode_box_autoadd_excluded_tables(
+      SseDeserializer deserializer);
+
+  @protected
   Options sse_decode_box_autoadd_options(SseDeserializer deserializer);
 
   @protected
@@ -216,6 +226,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   DBNotification sse_decode_db_notification(SseDeserializer deserializer);
+
+  @protected
+  ExcludedTables sse_decode_excluded_tables(SseDeserializer deserializer);
 
   @protected
   int sse_decode_i_32(SseDeserializer deserializer);
@@ -325,6 +338,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_box_autoadd_config(Config self, SseSerializer serializer);
 
   @protected
+  void sse_encode_box_autoadd_excluded_tables(
+      ExcludedTables self, SseSerializer serializer);
+
+  @protected
   void sse_encode_box_autoadd_options(Options self, SseSerializer serializer);
 
   @protected
@@ -347,6 +364,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_db_notification(
       DBNotification self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_excluded_tables(
+      ExcludedTables self, SseSerializer serializer);
 
   @protected
   void sse_encode_i_32(int self, SseSerializer serializer);
