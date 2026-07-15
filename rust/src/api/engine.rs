@@ -12,7 +12,7 @@ pub use surrealdb_core::rpc::Method;
 use surrealdb_core::rpc::RpcProtocol;
 use surrealdb_types::{HashMap, SurrealValue, Value};
 
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 
 use crate::api::connect::SurrealFlutterConnection;
 use crate::api::options::Options;
@@ -78,6 +78,8 @@ pub enum _Method {
     Delete,
     Version,
     Query,
+    Gql,
+    Graphql,
     Relate,
     Run,
     InsertRelation,
@@ -124,10 +126,18 @@ impl SurrealFlutterEngine {
         session: Option<Vec<u8>>,
     ) -> Result<Vec<u8>> {
         let engine = self.0.read().await;
-        let params = cbor::decode(&params)?;
-        let session = session.map(|s| Uuid::from_slice(&s)).transpose()?;
-        let res = RpcProtocol::execute(&*engine, None, session, method, params.into_array()?)
-            .await?;
+        let params = cbor::decode(&params, 128)?;
+        let client_session = session.map(|s| Uuid::from_slice(&s)).transpose()?;
+        let session_id = client_session.unwrap_or(engine.default_session);
+        let res = RpcProtocol::execute(
+            &*engine,
+            None,
+            session_id,
+            client_session,
+            method,
+            params.into_array()?,
+        )
+        .await?;
 
         let value: Value = res.into_value();
         let out = cbor::encode(value)?;
@@ -136,21 +146,14 @@ impl SurrealFlutterEngine {
     }
 
     pub async fn notifications(&self, sink: StreamSink<DBNotification>) -> Result<()> {
-        let stream = {
+        let receiver = {
             let engine = self.0.read().await;
-
-            engine
-                .kvs
-                .notifications()
-                .ok_or_else(|| anyhow!("Notifications not enabled"))?
+            engine.notifications.clone()
         };
         // Spawn a task to process notifications
 
         tokio::spawn(async move {
-            let notification_stream = stream;
-            let sink = sink;
-
-            while let Ok(notification) = notification_stream.recv().await {
+            while let Ok(notification) = receiver.recv().await {
                 if let (Ok(record), Ok(result)) = (
                     cbor::encode(notification.record),
                     cbor::encode(notification.result),
@@ -174,27 +177,32 @@ impl SurrealFlutterEngine {
             s => s,
         };
 
-        let kvs = Datastore::new(endpoint).await?.with_notifications();
-        let kvs = match opts {
-            None => kvs,
-            Some(opts) => kvs
-                .with_capabilities(
-                    opts.capabilities
-                        .map_or(Ok(Default::default()), |a| a.try_into())?,
-                )
-                .with_transaction_timeout(
-                    opts.transaction_timeout
-                        .map(|qt| Duration::from_secs(qt as u64)),
-                )
-                .with_query_timeout(opts.query_timeout.map(|qt| Duration::from_secs(qt as u64))),
-        };
+        let (notify_tx, notify_rx) = channel::unbounded();
+        let mut builder = Datastore::builder().with_notify(notify_tx);
+
+        if let Some(opts) = opts {
+            builder = builder.with_capabilities(
+                opts.capabilities
+                    .map_or(Ok(Default::default()), |a| a.try_into())?,
+            );
+            builder = builder.with_transaction_timeout(
+                opts.transaction_timeout.map(|qt| Duration::from_secs(qt as u64)),
+            );
+            builder = builder
+                .with_query_timeout(opts.query_timeout.map(|qt| Duration::from_secs(qt as u64)));
+        }
+
+        let kvs = builder.build_with_path(endpoint).await?;
 
         let session = Session::default().with_rt(true);
         let sessions = HashMap::new();
-        sessions.insert(None, Arc::new(RwLock::new(session)));
+        let default_id = Uuid::new_v4();
+        sessions.insert(default_id, Arc::new(RwLock::new(session)));
         let connection = SurrealFlutterConnection {
             kvs: Arc::new(kvs),
             sessions,
+            default_session: default_id,
+            notifications: notify_rx,
         };
 
         Ok(SurrealFlutterEngine(RwLock::new(connection)))
@@ -204,11 +212,12 @@ impl SurrealFlutterEngine {
         let engine = self.0.read().await;
         let (tx, rx) = channel::unbounded();
         let session = session.map(|s| Uuid::from_slice(&s)).transpose()?;
+        let session_id = session.unwrap_or(engine.default_session);
         match config {
             Some(config) => {
                 // let in_config = cbor::decode(&config.to_vec())?;
                 // let config = Config::try_from(&in_config)?;
-                let session_lock = engine.get_session(&session)?;
+                let session_lock = engine.get_session(&session_id)?;
                 let session = session_lock.read().await;
                 engine
                     .kvs
@@ -217,7 +226,7 @@ impl SurrealFlutterEngine {
                     .await?;
             }
             None => {
-                let session_lock = engine.get_session(&session)?;
+                let session_lock = engine.get_session(&session_id)?;
                 let session = session_lock.read().await;
                 engine.kvs.export(&session, tx).await?.await?;
             }
@@ -236,7 +245,8 @@ impl SurrealFlutterEngine {
     pub async fn import(&self, input: String, session: Option<Vec<u8>>) -> Result<()> {
         let engine = self.0.read().await;
         let session = session.map(|s| Uuid::from_slice(&s)).transpose()?;
-        let session_lock = engine.get_session(&session)?;
+        let session_id = session.unwrap_or(engine.default_session);
+        let session_lock = engine.get_session(&session_id)?;
         let session = session_lock.read().await;
         engine.kvs.import(&input, &session).await?;
 
@@ -248,18 +258,18 @@ impl SurrealFlutterEngine {
         let id = Uuid::new_v4();
         let session = Session::default().with_rt(true);
         let session = Arc::new(RwLock::new(session));
-        engine.set_session(Some(id), session);
+        engine.set_session(id, session);
         id.as_bytes().to_vec()
     }
 
     pub async fn fork_session(&self, id: Vec<u8>) -> Result<Vec<u8>> {
         let engine = self.0.read().await;
         let id = Uuid::from_slice(&id)?;
-        let session_lock = engine.get_session(&Some(id))?;
+        let session_lock = engine.get_session(&id)?;
         let session = session_lock.read().await.clone();
         let session = Arc::new(RwLock::new(session));
         let new_id = Uuid::new_v4();
-        engine.set_session(Some(new_id), session);
+        engine.set_session(new_id, session);
         Ok(new_id.as_bytes().to_vec())
     }
 

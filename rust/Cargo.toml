@@ -7,11 +7,11 @@ edition = "2021"
 crate-type = ["cdylib", "staticlib"]
 
 [workspace.dependencies]
-surrealdb-core = { version = "=3.0.5" }
-surrealdb-types = { version = "=3.0.5" }
+surrealdb-core = { version = "=3.2.1" }
+surrealdb-types = { version = "=3.2.1" }
 
 [dependencies]
-flutter_rust_bridge = {version="=2.11.1",features=["log"]}
+flutter_rust_bridge = { version = "=2.12.0", features = ["log"] }
 tokio = "1.47.1"
 surrealdb-types = { workspace = true }
 serde = { version = "1.0.219", features = ["derive"] }
