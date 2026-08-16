@@ -1,6 +1,9 @@
 library flutter_surrealdb;
 
 import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_io.dart';
 import 'package:flutter_surrealdb/flutter_surrealdb.dart';
 import 'package:flutter_surrealdb/rpc/embedded.dart';
@@ -14,7 +17,6 @@ export 'src/rust/api/engine.dart' show SurrealFlutterEngine, Action, Config;
 export 'src/rust/api/options.dart' show Options;
 export 'data/ressource.dart';
 export 'data/notification.dart' show Notification;
-export 'data/options.dart';
 
 class SurrealDB {
   final RPCEngine _engine;
@@ -96,11 +98,13 @@ class SurrealDB {
           "Invalid response from query: expected an Iterable got ${res.runtimeType}");
     }
     for (final e in res) {
-      if (e["error"] != null) {
-        throw QueryError(e["error"]);
+      if (e is Map && (e["error"] != null || e["status"] == "ERR")) {
+        // For an errored statement the message is carried in the 'result'
+        // field (the 'error' key is checked for older wire shapes).
+        throw QueryError("${e["error"] ?? e["result"]}");
       }
     }
-    return res.map((e) => e["result"]).toList();
+    return res.map((e) => e is Map ? e["result"] : e).toList();
   }
 
   /// Selects either all records in a table or a single record.
@@ -120,35 +124,56 @@ class SurrealDB {
   ///
   /// Parameters:
   /// - [id]: The UUID of the live query to kill.
-  Future<void> kill(UuidValue id) async {
-    await _engine.kill(id);
+  /// - [session]: Optional session ID.
+  Future<void> kill(UuidValue id, {UuidValue? session}) async {
+    await _engine.kill(id, session: session);
   }
 
-  Stream<Notification> live(DBTable table, {bool? diff}) async* {
-    yield* liveOf(await _engine.live(table, diff: diff));
+  /// Initiates a live query on a table and returns its notifications.
+  ///
+  /// Cancelling the returned stream kills the live query.
+  ///
+  /// Parameters:
+  /// - [table]: The table to watch.
+  /// - [diff]: If true, notifications contain JSON patches instead of full records.
+  /// - [session]: Optional session ID.
+  Stream<Notification> live(DBTable table, {bool? diff, UuidValue? session}) async* {
+    yield* liveOf(await _engine.live(table, diff: diff, session: session),
+        session: session);
   }
 
+  /// Returns the notifications of an existing live query.
+  ///
+  /// Parameters:
+  /// - [id]: The UUID of the live query.
+  /// - [onKill]: Optional callback invoked after the stream is cancelled.
+  /// - [shouldKillOnCancel]: Whether cancelling the stream kills the live query.
+  /// - [session]: Optional session ID used when killing the live query.
   Stream<Notification> liveOf(
     UuidValue id, {
     Future<void> Function()? onKill,
     bool shouldKillOnCancel = true,
+    UuidValue? session,
   }) {
     late final StreamController<Notification> controller;
     late final StreamSubscription<Notification> subscription;
     controller = StreamController<Notification>(
       onCancel: () async {
-        if (shouldKillOnCancel) {
-          await _engine.kill(id);
+        try {
+          if (shouldKillOnCancel) {
+            await _engine.kill(id, session: session);
+          }
+        } finally {
+          await subscription.cancel();
+          await onKill?.call();
         }
-        await subscription.cancel();
-        await onKill?.call();
       },
       onListen: () {
         subscription = _engine.notifications.listen((event) {
           if (event.id == id) {
             controller.add(event);
           }
-        });
+        }, onError: controller.addError, onDone: controller.close);
       },
     );
     return controller.stream;
@@ -168,13 +193,29 @@ class SurrealDB {
 
   // EXPORT / IMPORT
 
+  /// Exports the database data as a stream of chunks.
+  ///
+  /// Cancelling the returned stream aborts the export. Prefer this over
+  /// [export] for large databases.
+  ///
+  /// Parameters:
+  /// - [options]: Optional configuration for the export.
+  /// Returns: A stream of UTF-8 encoded chunks.
+  Stream<Uint8List> exportStream({Config? options}) {
+    return _engine.exportStream(options);
+  }
+
   /// Exports the database data.
+  ///
+  /// This buffers the entire export in memory; see [exportStream] for a
+  /// streaming alternative.
   ///
   /// Parameters:
   /// - [options]: Optional configuration for the export.
   /// Returns: The exported data as a string.
   Future<String> export({Config? options}) async {
-    return await _engine.export(options);
+    final chunks = await _engine.exportStream(options).toList();
+    return utf8.decode(chunks.expand((chunk) => chunk).toList());
   }
 
   /// Imports data into the database.
@@ -197,6 +238,32 @@ class SurrealDB {
   /// Returns: The updated data.
   Future<dynamic> update(Resource thing, dynamic data) async {
     return await _engine.update(thing, data);
+  }
+
+  /// Merges specified data into either all records in a table or a single record.
+  ///
+  /// This corresponds to the 'merge' RPC method.
+  ///
+  /// Parameters:
+  /// - [thing]: The thing (Table or Record ID) to merge into.
+  /// - [data]: The data to merge.
+  /// Returns: The merged record(s).
+  Future<dynamic> merge(Resource thing, dynamic data) async {
+    return await _engine.merge(thing, data);
+  }
+
+  /// Patches either all records in a table or a single record with JSON Patch operations.
+  ///
+  /// This corresponds to the 'patch' RPC method.
+  ///
+  /// Parameters:
+  /// - [thing]: The thing (Table or Record ID) to patch.
+  /// - [patches]: An array of patches following the JSON Patch specification.
+  /// - [diff]: Optional, if true returns just the diff instead of the full record.
+  /// Returns: The patched record(s) or diff.
+  Future<dynamic> patch(Resource thing, List<Map<String, dynamic>> patches,
+      {bool? diff}) async {
+    return await _engine.patch(thing, patches, diff: diff);
   }
 
   /// Replaces either all records in a table or a single record with specified data.
@@ -234,6 +301,34 @@ class SurrealDB {
     return await _engine.insert(thing, data);
   }
 
+  /// Inserts a relation record.
+  ///
+  /// This corresponds to the 'insert_relation' RPC method.
+  ///
+  /// Parameters:
+  /// - [table]: The relation table to insert into.
+  /// - [data]: The relation data (should include 'in' and 'out' fields).
+  /// Returns: The inserted relation record(s).
+  Future<dynamic> insertRelation(DBTable table, dynamic data) async {
+    return await _engine.insertRelation(table, data);
+  }
+
+  /// Creates a graph edge between two records.
+  ///
+  /// This corresponds to the 'relate' RPC method.
+  ///
+  /// Parameters:
+  /// - [inRecord]: The source record.
+  /// - [relation]: The relation table name.
+  /// - [outRecord]: The target record.
+  /// - [data]: Optional data to store on the edge.
+  /// Returns: The created relation.
+  Future<dynamic> relate(
+      Resource inRecord, String relation, Resource outRecord,
+      {dynamic data}) async {
+    return await _engine.relate(inRecord, relation, outRecord, data: data);
+  }
+
   // AUTH
 
   /// Signs up a user using the SIGNUP query defined in a record access method.
@@ -250,7 +345,7 @@ class SurrealDB {
       {required String ns,
       required String db,
       required String access,
-      required dynamic variables}) async {
+      Map<String, dynamic>? variables}) async {
     return await _engine.signup(
         ns: ns, db: db, access: access, variables: variables);
   }
@@ -273,7 +368,7 @@ class SurrealDB {
       String? username,
       String? password,
       String? access,
-      required dynamic variables}) async {
+      Map<String, dynamic>? variables}) async {
     return await _engine.signin(
         ns: ns,
         db: db,
@@ -342,7 +437,9 @@ class SurrealDB {
   }
 
   /// Disposes the SurrealDB instance and cleans up resources.
-  void dispose() {
-    _engine.dispose();
+  ///
+  /// The instance must not be used afterwards.
+  Future<void> dispose() async {
+    await _engine.dispose();
   }
 }

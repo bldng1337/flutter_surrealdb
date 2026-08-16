@@ -13,4 +13,22 @@ class Notification {
     required this.record,
     required this.result,
   });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Notification &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          action == other.action &&
+          record == other.record &&
+          result == other.result;
+
+  @override
+  int get hashCode =>
+      id.hashCode ^ action.hashCode ^ record.hashCode ^ result.hashCode;
+
+  @override
+  String toString() =>
+      "Notification(id: $id, action: $action, record: $record, result: $result)";
 }

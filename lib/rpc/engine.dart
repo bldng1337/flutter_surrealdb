@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_surrealdb/data/notification.dart';
 import 'package:flutter_surrealdb/flutter_surrealdb.dart';
 import 'package:flutter_surrealdb/src/rust/api/engine.dart';
@@ -7,7 +9,7 @@ mixin RPCEngine {
   Future<dynamic> execute(Method method, List<dynamic> params,
       {UuidValue? session});
   Future<String> engineVersion();
-  Future<String> export(Config? options, {UuidValue? session});
+  Stream<Uint8List> exportStream(Config? options, {UuidValue? session});
   Future<void> import(String input, {UuidValue? session});
   Future<UuidValue> forkSession(UuidValue session);
   Future<UuidValue> createSession();
@@ -256,12 +258,19 @@ mixin RPCEngine {
       {required String ns,
       required String db,
       required String access,
-      required dynamic variables,
+      Map<String, dynamic>? variables,
       UuidValue? session}) async {
     return await execute(
         Method.signup,
         [
-          {"NS": ns, "DB": db, "AC": access, ...variables}
+          {
+            // Spread first so the authentication context cannot be
+            // overridden by the provided variables.
+            ...?variables,
+            "NS": ns,
+            "DB": db,
+            "AC": access,
+          }
         ],
         session: session);
   }
@@ -285,18 +294,20 @@ mixin RPCEngine {
       String? username,
       String? password,
       String? access,
-      required dynamic variables,
+      Map<String, dynamic>? variables,
       UuidValue? session}) async {
     return await execute(
         Method.signin,
         [
           {
+            // Spread first so the authentication context cannot be
+            // overridden by the provided variables.
+            ...?variables,
             if (ns != null) "NS": ns,
             if (db != null) "DB": db,
             if (username != null) "user": username,
             if (password != null) "pass": password,
             if (access != null) "AC": access,
-            ...variables
           }
         ],
         session: session);

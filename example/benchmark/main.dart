@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:benchmarking/benchmarking.dart';
 import 'package:flutter_surrealdb/flutter_surrealdb.dart';
-import 'dart:io' show Platform;
+import 'dart:io' show Directory, Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_surrealdb/utils.dart';
 
@@ -110,8 +110,7 @@ Future<List<String>> getKVBackends() async {
     list.add('indxdb://test');
     return list;
   }
-  // final tempDir = await getTemporaryDirectory();
-  String tempPath = "/data/data/com.example.flutter_surrealdb_example/cache/";
+  final String tempPath = Directory.systemTemp.path;
   list.add('surrealkv://$tempPath/surrealkv');
   if (Platform.isWindows || Platform.isLinux) {
     list.add('rocksdb://$tempPath/rocksdb.db');

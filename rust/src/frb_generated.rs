@@ -39,7 +39,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.12.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 55885841;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -450892620;
 
 // Section: executor
 
@@ -272,7 +272,7 @@ fn wire__crate__api__engine__SurrealFlutterEngine_execute_impl(
         },
     )
 }
-fn wire__crate__api__engine__SurrealFlutterEngine_export_impl(
+fn wire__crate__api__engine__SurrealFlutterEngine_export_stream_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -280,7 +280,7 @@ fn wire__crate__api__engine__SurrealFlutterEngine_export_impl(
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
         flutter_rust_bridge::for_generated::TaskInfo {
-            debug_name: "SurrealFlutterEngine_export",
+            debug_name: "SurrealFlutterEngine_export_stream",
             port: Some(port_),
             mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
         },
@@ -299,6 +299,10 @@ fn wire__crate__api__engine__SurrealFlutterEngine_export_impl(
             >>::sse_decode(&mut deserializer);
             let api_config = <Option<crate::api::engine::Config>>::sse_decode(&mut deserializer);
             let api_session = <Option<Vec<u8>>>::sse_decode(&mut deserializer);
+            let api_sink =
+                <StreamSink<Vec<u8>, flutter_rust_bridge::for_generated::SseCodec>>::sse_decode(
+                    &mut deserializer,
+                );
             deserializer.end();
             move |context| async move {
                 transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
@@ -320,10 +324,11 @@ fn wire__crate__api__engine__SurrealFlutterEngine_export_impl(
                             }
                         }
                         let api_that_guard = api_that_guard.unwrap();
-                        let output_ok = crate::api::engine::SurrealFlutterEngine::export(
+                        let output_ok = crate::api::engine::SurrealFlutterEngine::export_stream(
                             &*api_that_guard,
                             api_config,
                             api_session,
+                            api_sink,
                         )
                         .await?;
                         Ok(output_ok)
@@ -672,6 +677,14 @@ impl SseDecode
     }
 }
 
+impl SseDecode for StreamSink<Vec<u8>, flutter_rust_bridge::for_generated::SseCodec> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <String>::sse_decode(deserializer);
+        return StreamSink::deserialize(inner);
+    }
+}
+
 impl SseDecode for String {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -689,6 +702,8 @@ impl SseDecode for crate::api::engine::Action {
             1 => crate::api::engine::Action::Update,
             2 => crate::api::engine::Action::Delete,
             3 => crate::api::engine::Action::Unkown,
+            4 => crate::api::engine::Action::Killed,
+            5 => crate::api::engine::Action::Error,
             _ => unreachable!("Invalid variant for Action: {}", inner),
         };
     }
@@ -940,11 +955,11 @@ impl SseDecode for Option<crate::api::options::TargetsConfig> {
     }
 }
 
-impl SseDecode for Option<u8> {
+impl SseDecode for Option<u32> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         if (<bool>::sse_decode(deserializer)) {
-            return Some(<u8>::sse_decode(deserializer));
+            return Some(<u32>::sse_decode(deserializer));
         } else {
             return None;
         }
@@ -965,8 +980,8 @@ impl SseDecode for Option<Vec<u8>> {
 impl SseDecode for crate::api::options::Options {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        let mut var_queryTimeout = <Option<u8>>::sse_decode(deserializer);
-        let mut var_transactionTimeout = <Option<u8>>::sse_decode(deserializer);
+        let mut var_queryTimeout = <Option<u32>>::sse_decode(deserializer);
+        let mut var_transactionTimeout = <Option<u32>>::sse_decode(deserializer);
         let mut var_capabilities =
             <Option<crate::api::options::CapabilitiesConfig>>::sse_decode(deserializer);
         return crate::api::options::Options {
@@ -1053,6 +1068,13 @@ impl SseDecode for crate::api::options::TargetsConfig {
     }
 }
 
+impl SseDecode for u32 {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        deserializer.cursor.read_u32::<NativeEndian>().unwrap()
+    }
+}
+
 impl SseDecode for u8 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -1105,7 +1127,7 @@ fn pde_ffi_dispatcher_primary_impl(
             rust_vec_len,
             data_len,
         ),
-        5 => wire__crate__api__engine__SurrealFlutterEngine_export_impl(
+        5 => wire__crate__api__engine__SurrealFlutterEngine_export_stream_impl(
             port,
             ptr,
             rust_vec_len,
@@ -1177,6 +1199,8 @@ impl flutter_rust_bridge::IntoDart for crate::api::engine::Action {
             Self::Update => 1.into_dart(),
             Self::Delete => 2.into_dart(),
             Self::Unkown => 3.into_dart(),
+            Self::Killed => 4.into_dart(),
+            Self::Error => 5.into_dart(),
             _ => unreachable!(),
         }
     }
@@ -1505,6 +1529,13 @@ impl SseEncode
     }
 }
 
+impl SseEncode for StreamSink<Vec<u8>, flutter_rust_bridge::for_generated::SseCodec> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        unimplemented!("")
+    }
+}
+
 impl SseEncode for String {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -1521,6 +1552,8 @@ impl SseEncode for crate::api::engine::Action {
                 crate::api::engine::Action::Update => 1,
                 crate::api::engine::Action::Delete => 2,
                 crate::api::engine::Action::Unkown => 3,
+                crate::api::engine::Action::Killed => 4,
+                crate::api::engine::Action::Error => 5,
                 _ => {
                     unimplemented!("");
                 }
@@ -1739,12 +1772,12 @@ impl SseEncode for Option<crate::api::options::TargetsConfig> {
     }
 }
 
-impl SseEncode for Option<u8> {
+impl SseEncode for Option<u32> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <bool>::sse_encode(self.is_some(), serializer);
         if let Some(value) = self {
-            <u8>::sse_encode(value, serializer);
+            <u32>::sse_encode(value, serializer);
         }
     }
 }
@@ -1762,8 +1795,8 @@ impl SseEncode for Option<Vec<u8>> {
 impl SseEncode for crate::api::options::Options {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <Option<u8>>::sse_encode(self.query_timeout, serializer);
-        <Option<u8>>::sse_encode(self.transaction_timeout, serializer);
+        <Option<u32>>::sse_encode(self.query_timeout, serializer);
+        <Option<u32>>::sse_encode(self.transaction_timeout, serializer);
         <Option<crate::api::options::CapabilitiesConfig>>::sse_encode(
             self.capabilities,
             serializer,
@@ -1836,6 +1869,13 @@ impl SseEncode for crate::api::options::TargetsConfig {
                 unimplemented!("");
             }
         }
+    }
+}
+
+impl SseEncode for u32 {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        serializer.cursor.write_u32::<NativeEndian>(self).unwrap();
     }
 }
 

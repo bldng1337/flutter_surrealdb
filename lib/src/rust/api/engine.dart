@@ -11,6 +11,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 part 'engine.freezed.dart';
 
+// These functions are ignored because they are not marked as `pub`: `create_missing_table`, `escape_surreal_ident`, `is_missing_table`, `missing_table_fallback`, `retry`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `from`
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<SurrealFlutterEngine>>
@@ -27,7 +28,10 @@ abstract class SurrealFlutterEngine implements RustOpaqueInterface {
   Future<Uint8List> execute(
       {required Method method, required List<int> params, Uint8List? session});
 
-  Future<String> export_({Config? config, Uint8List? session});
+  /// Streams the database export to [sink] in chunks instead of buffering
+  /// the whole export in memory. Cancelling the Dart-side stream aborts
+  /// the export.
+  Stream<Uint8List> exportStream({Config? config, Uint8List? session});
 
   Future<Uint8List> forkSession({required List<int> id});
 
@@ -44,6 +48,8 @@ enum Action {
   update,
   delete,
   unkown,
+  killed,
+  error,
   ;
 }
 

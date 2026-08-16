@@ -46,7 +46,6 @@ unexpected_cfgs = { level = "warn", check-cfg = ['cfg(frb_expand)'] }
 [profile.release]
 opt-level = "s"
 strip = true
-panic = "abort"
 lto = true
 codegen-units = 1
 

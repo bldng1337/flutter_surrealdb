@@ -33,7 +33,7 @@ Future<void> main() async {
   final firstId = created.first['id'] as DBRecord;
   final onePerson = await db.select(firstId);
 
-  final rows = await db.query('SELECT * FROM person WHERE role = $role', vars: {
+  final rows = await db.query('SELECT * FROM person WHERE role = \$role', vars: {
     'role': 'engineer',
   });
 

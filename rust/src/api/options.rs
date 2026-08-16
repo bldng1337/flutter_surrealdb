@@ -1,12 +1,14 @@
-use anyhow::{Error, Result};
+use anyhow::{anyhow, Error, Result};
 use serde::Deserialize;
 use std::collections::HashSet;
 use surrealdb_core::dbs::capabilities;
 
 #[derive(Deserialize)]
 pub struct Options {
-    pub query_timeout: Option<u8>,
-    pub transaction_timeout: Option<u8>,
+    /// Query timeout in milliseconds.
+    pub query_timeout: Option<u32>,
+    /// Transaction timeout in milliseconds.
+    pub transaction_timeout: Option<u32>,
     pub capabilities: Option<CapabilitiesConfig>,
 }
 
@@ -43,11 +45,15 @@ pub enum TargetsConfig {
 
 macro_rules! process_targets {
     ($set:ident) => {{
-        let mut functions = HashSet::with_capacity($set.len());
-        for function in $set {
-            functions.insert(function.parse().expect("invalid function name"));
+        let mut targets = HashSet::with_capacity($set.len());
+        for target in $set {
+            targets.insert(
+                target
+                    .parse()
+                    .map_err(|_| anyhow!("invalid target name: '{target}'"))?,
+            );
         }
-        capabilities::Targets::Some(functions)
+        capabilities::Targets::Some(targets)
     }};
 }
 

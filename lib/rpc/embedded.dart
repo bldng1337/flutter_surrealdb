@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:typed_data';
+
 import 'package:cbor/cbor.dart';
 import 'package:flutter_surrealdb/data/notification.dart';
 import 'package:flutter_surrealdb/flutter_surrealdb.dart';
@@ -15,15 +18,26 @@ class RustEngine with RPCEngine {
   Future<void> connect({required String endpoint, Options? opts}) async {
     _engine =
         await SurrealFlutterEngine.connect(endpoint: endpoint, opts: opts);
-    notifications = _engine
-        .notifications()
-        .map((n) => Notification(
+    // The stream returned by the Rust bridge is single-subscription: wrapping
+    // it in `asBroadcastStream` would permanently cancel it once the last
+    // listener goes away and break every future live query on this engine.
+    // Bridge it through our own broadcast controller instead, with a
+    // subscription that stays alive for the lifetime of the engine.
+    final controller = StreamController<Notification>.broadcast();
+    _engine.notifications().listen(
+          (n) => controller.add(Notification(
             id: UuidValue.fromByteList(n.id),
             action: n.action,
-            record: decodeDBData(cbor.decode(n.record)),
-            result: decodeDBData(cbor.decode(n.result))))
-        .asBroadcastStream();
+            record: _asRecord(decodeDBDataBytes(n.record)),
+            result: decodeDBDataBytes(n.result),
+          )),
+          onError: controller.addError,
+          onDone: controller.close,
+        );
+    notifications = controller.stream;
   }
+
+  static DBRecord? _asRecord(dynamic value) => value is DBRecord ? value : null;
 
   @override
   Future<dynamic> execute(Method method, List<dynamic> params,
@@ -39,12 +53,17 @@ class RustEngine with RPCEngine {
 
   @override
   Future<void> dispose() async {
+    // The notification subscription is deliberately not cancelled: the
+    // ReceivePort-backed bridge stream has a cancel future that never
+    // completes (flutter_rust_bridge 2.12). Dropping the engine closes the
+    // notification channel, which stops the Rust pump task and closes the
+    // stream from the Rust side instead.
     _engine.dispose();
   }
 
   @override
-  Future<String> export(Config? options, {UuidValue? session}) async {
-    return await _engine.export_(config: options, session: session?.toBytes());
+  Stream<Uint8List> exportStream(Config? options, {UuidValue? session}) {
+    return _engine.exportStream(config: options, session: session?.toBytes());
   }
 
   @override

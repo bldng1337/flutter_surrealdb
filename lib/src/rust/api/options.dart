@@ -29,7 +29,10 @@ sealed class CapabilitiesConfig with _$CapabilitiesConfig {
 }
 
 class Options {
+  /// Query timeout in milliseconds.
   final int? queryTimeout;
+
+  /// Transaction timeout in milliseconds.
   final int? transactionTimeout;
   final CapabilitiesConfig? capabilities;
 

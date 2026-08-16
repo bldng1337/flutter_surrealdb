@@ -19,6 +19,16 @@ class DBTable implements Resource {
   String get resource => tb;
 
   @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is DBTable &&
+          runtimeType == other.runtimeType &&
+          tb == other.tb;
+
+  @override
+  int get hashCode => tb.hashCode;
+
+  @override
   String toString() => "DBTable(tb: $tb)";
 }
 
