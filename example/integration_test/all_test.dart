@@ -4,6 +4,7 @@ import 'live_test.dart' as live_test;
 import 'minimal_test.dart' as minimal_test;
 import 'query_test.dart' as query_test;
 import 'regression_test.dart' as regression_test;
+import 'share_test.dart' as share_test;
 import 'wire_compat.dart' as wire_compat;
 
 import 'package:integration_test/integration_test.dart';
@@ -20,4 +21,5 @@ void main() {
   group('Fuzz Tests', fuzz_test.dotest);
   group('Wire Compatibility Tests', wire_compat.dotest);
   group('Regression Tests', regression_test.dotest);
+  group('Shared Connection Tests', share_test.dotest);
 }

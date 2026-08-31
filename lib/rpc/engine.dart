@@ -15,7 +15,8 @@ mixin RPCEngine {
   Future<UuidValue> createSession();
   Future<void> closeSession(UuidValue session);
   Future<void> dispose();
-  Future<void> connect({required String endpoint, Options? opts});
+  Future<void> connect(
+      {required String endpoint, Options? opts, String? shareTag});
   Stream<Notification> get notifications;
 
   /// Specifies or unsets the namespace and/or database for the current connection.

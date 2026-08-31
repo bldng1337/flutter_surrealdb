@@ -42,10 +42,20 @@ class SurrealDB {
   /// Parameters:
   /// - [endpoint]: The connection endpoint.
   /// - [opts]: Optional connection options.
+  /// - [shareTag]: Optional tag under which this connection becomes
+  ///   process-wide. Any connect (from any isolate) that passes the same tag
+  ///   attaches to the same underlying engine instead of opening the database
+  ///   file again — which matters for file-backed endpoints such as
+  ///   `surrealkv://`, whose lock is held by the first connection. Every
+  ///   attached client gets its own session, so `use`, variables and
+  ///   authentication stay per-client. Attaching fails if the tag is already
+  ///   open with a different endpoint or different options. Without a tag
+  ///   (the default) the client owns a private engine, exactly as before.
   /// Returns: A SurrealDB instance.
-  static Future<SurrealDB> connect(String endpoint, {Options? opts}) async {
+  static Future<SurrealDB> connect(String endpoint,
+      {Options? opts, String? shareTag}) async {
     final engine = RustEngine();
-    await engine.connect(endpoint: endpoint, opts: opts);
+    await engine.connect(endpoint: endpoint, opts: opts, shareTag: shareTag);
     return SurrealDB(engine);
   }
 
@@ -160,9 +170,14 @@ class SurrealDB {
     controller = StreamController<Notification>(
       onCancel: () async {
         try {
+          // Best-effort: the live query may already be dead — closing the
+          // client kills the live queries of its session, so a cancel that
+          // arrives afterwards must not surface an error.
           if (shouldKillOnCancel) {
             await _engine.kill(id, session: session);
           }
+        } catch (_) {
+          // Swallowed deliberately: see above.
         } finally {
           await subscription.cancel();
           await onKill?.call();

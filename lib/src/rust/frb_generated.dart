@@ -73,7 +73,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.12.0';
 
   @override
-  int get rustContentHash => -450892620;
+  int get rustContentHash => -870282382;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -85,11 +85,14 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
+  Future<void> crateApiEngineSurrealFlutterEngineClose(
+      {required SurrealFlutterEngine that});
+
   Future<void> crateApiEngineSurrealFlutterEngineCloseSession(
       {required SurrealFlutterEngine that, required List<int> id});
 
   Future<SurrealFlutterEngine> crateApiEngineSurrealFlutterEngineConnect(
-      {required String endpoint, Options? opts});
+      {required String endpoint, Options? opts, String? shareTag});
 
   Future<Uint8List> crateApiEngineSurrealFlutterEngineCreateSession(
       {required SurrealFlutterEngine that});
@@ -137,6 +140,33 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
+  Future<void> crateApiEngineSurrealFlutterEngineClose(
+      {required SurrealFlutterEngine that}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealFlutterEngine(
+            that, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 1, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: sse_decode_AnyhowException,
+      ),
+      constMeta: kCrateApiEngineSurrealFlutterEngineCloseConstMeta,
+      argValues: [that],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiEngineSurrealFlutterEngineCloseConstMeta =>
+      const TaskConstMeta(
+        debugName: "SurrealFlutterEngine_close",
+        argNames: ["that"],
+      );
+
+  @override
   Future<void> crateApiEngineSurrealFlutterEngineCloseSession(
       {required SurrealFlutterEngine that, required List<int> id}) {
     return handler.executeNormal(NormalTask(
@@ -146,7 +176,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that, serializer);
         sse_encode_list_prim_u_8_loose(id, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 1, port: port_);
+            funcId: 2, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -166,14 +196,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @override
   Future<SurrealFlutterEngine> crateApiEngineSurrealFlutterEngineConnect(
-      {required String endpoint, Options? opts}) {
+      {required String endpoint, Options? opts, String? shareTag}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(endpoint, serializer);
         sse_encode_opt_box_autoadd_options(opts, serializer);
+        sse_encode_opt_String(shareTag, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 2, port: port_);
+            funcId: 3, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData:
@@ -181,7 +212,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         decodeErrorData: sse_decode_AnyhowException,
       ),
       constMeta: kCrateApiEngineSurrealFlutterEngineConnectConstMeta,
-      argValues: [endpoint, opts],
+      argValues: [endpoint, opts, shareTag],
       apiImpl: this,
     ));
   }
@@ -189,7 +220,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiEngineSurrealFlutterEngineConnectConstMeta =>
       const TaskConstMeta(
         debugName: "SurrealFlutterEngine_connect",
-        argNames: ["endpoint", "opts"],
+        argNames: ["endpoint", "opts", "shareTag"],
       );
 
   @override
@@ -201,11 +232,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSurrealFlutterEngine(
             that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 3, port: port_);
+            funcId: 4, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_list_prim_u_8_strict,
-        decodeErrorData: null,
+        decodeErrorData: sse_decode_AnyhowException,
       ),
       constMeta: kCrateApiEngineSurrealFlutterEngineCreateSessionConstMeta,
       argValues: [that],
@@ -234,7 +265,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_list_prim_u_8_loose(params, serializer);
         sse_encode_opt_list_prim_u_8_strict(session, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 4, port: port_);
+            funcId: 5, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_list_prim_u_8_strict,
@@ -267,7 +298,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_opt_list_prim_u_8_strict(session, serializer);
         sse_encode_StreamSink_list_prim_u_8_strict_Sse(sink, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 5, port: port_);
+            funcId: 6, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -296,7 +327,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that, serializer);
         sse_encode_list_prim_u_8_loose(id, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 6, port: port_);
+            funcId: 7, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_list_prim_u_8_strict,
@@ -327,7 +358,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_String(input, serializer);
         sse_encode_opt_list_prim_u_8_strict(session, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 7, port: port_);
+            funcId: 8, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -356,7 +387,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that, serializer);
         sse_encode_StreamSink_db_notification_Sse(sink, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 8, port: port_);
+            funcId: 9, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -380,7 +411,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     return handler.executeSync(SyncTask(
       callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_String,
@@ -403,7 +434,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     return handler.executeSync(SyncTask(
       callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 11)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -641,6 +672,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Method dco_decode_method(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return Method.values[raw as int];
+  }
+
+  @protected
+  String? dco_decode_opt_String(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_String(raw);
   }
 
   @protected
@@ -1031,6 +1068,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_i_32(deserializer);
     return Method.values[inner];
+  }
+
+  @protected
+  String? sse_decode_opt_String(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_String(deserializer));
+    } else {
+      return null;
+    }
   }
 
   @protected
@@ -1454,6 +1502,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_String(String? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_String(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_opt_box_autoadd_bool(bool? self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -1640,6 +1698,16 @@ class SurrealFlutterEngineImpl extends RustOpaque
         .instance.api.rust_arc_decrement_strong_count_SurrealFlutterEnginePtr,
   );
 
+  /// Releases this engine handle: its session is removed (killing the live
+  /// queries created through it) and, for shared connections, its lease is
+  /// dropped. When the last handle of a shared connection is released, the
+  /// connection is deregistered and its datastore, together with the file
+  /// lock, is dropped.
+  Future<void> close() =>
+      RustLib.instance.api.crateApiEngineSurrealFlutterEngineClose(
+        that: this,
+      );
+
   Future<void> closeSession({required List<int> id}) => RustLib.instance.api
       .crateApiEngineSurrealFlutterEngineCloseSession(that: this, id: id);
 
@@ -1656,8 +1724,8 @@ class SurrealFlutterEngineImpl extends RustOpaque
           that: this, method: method, params: params, session: session);
 
   /// Streams the database export to [sink] in chunks instead of buffering
-  /// the whole export in memory. Cancelling the Dart-side stream aborts
-  /// the export.
+  /// the whole export in memory. Cancelling the Dart-side stream aborts the
+  /// export.
   Stream<Uint8List> exportStream({Config? config, Uint8List? session}) =>
       RustLib.instance.api.crateApiEngineSurrealFlutterEngineExportStream(
           that: this, config: config, session: session);

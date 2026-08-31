@@ -11,17 +11,32 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 part 'engine.freezed.dart';
 
-// These functions are ignored because they are not marked as `pub`: `create_missing_table`, `escape_surreal_ident`, `is_missing_table`, `missing_table_fallback`, `retry`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `from`
+// These functions are ignored because they are not marked as `pub`: `build_connection`, `conn`, `create_missing_table`, `escape_surreal_ident`, `is_missing_table`, `missing_table_fallback`, `release`, `retry`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `drop`, `from`
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<SurrealFlutterEngine>>
 abstract class SurrealFlutterEngine implements RustOpaqueInterface {
+  /// Releases this engine handle: its session is removed (killing the live
+  /// queries created through it) and, for shared connections, its lease is
+  /// dropped. When the last handle of a shared connection is released, the
+  /// connection is deregistered and its datastore, together with the file
+  /// lock, is dropped.
+  Future<void> close();
+
   Future<void> closeSession({required List<int> id});
 
+  /// Connects to a SurrealDB instance.
+  ///
+  /// Without [share_tag] the returned handle owns a private connection.
+  /// With [share_tag] the handle attaches to the process-wide connection
+  /// registered under that tag, creating it if needed; this is what allows
+  /// other isolates to use the same database even though its file is locked
+  /// by the first connection. Attaching is rejected when the tag is already
+  /// registered with a different endpoint or different options.
   static Future<SurrealFlutterEngine> connect(
-          {required String endpoint, Options? opts}) =>
+          {required String endpoint, Options? opts, String? shareTag}) =>
       RustLib.instance.api.crateApiEngineSurrealFlutterEngineConnect(
-          endpoint: endpoint, opts: opts);
+          endpoint: endpoint, opts: opts, shareTag: shareTag);
 
   Future<Uint8List> createSession();
 
@@ -29,8 +44,8 @@ abstract class SurrealFlutterEngine implements RustOpaqueInterface {
       {required Method method, required List<int> params, Uint8List? session});
 
   /// Streams the database export to [sink] in chunks instead of buffering
-  /// the whole export in memory. Cancelling the Dart-side stream aborts
-  /// the export.
+  /// the whole export in memory. Cancelling the Dart-side stream aborts the
+  /// export.
   Stream<Uint8List> exportStream({Config? config, Uint8List? session});
 
   Future<Uint8List> forkSession({required List<int> id});

@@ -15,9 +15,10 @@ class RustEngine with RPCEngine {
   late final Stream<Notification> notifications;
 
   @override
-  Future<void> connect({required String endpoint, Options? opts}) async {
-    _engine =
-        await SurrealFlutterEngine.connect(endpoint: endpoint, opts: opts);
+  Future<void> connect(
+      {required String endpoint, Options? opts, String? shareTag}) async {
+    _engine = await SurrealFlutterEngine.connect(
+        endpoint: endpoint, opts: opts, shareTag: shareTag);
     // The stream returned by the Rust bridge is single-subscription: wrapping
     // it in `asBroadcastStream` would permanently cancel it once the last
     // listener goes away and break every future live query on this engine.
@@ -47,6 +48,7 @@ class RustEngine with RPCEngine {
       params: cbor.encode(
         encodeDBData(params),
       ),
+      session: session?.toBytes(),
     );
     return decodeDBData(cbor.decode(res));
   }
@@ -55,10 +57,10 @@ class RustEngine with RPCEngine {
   Future<void> dispose() async {
     // The notification subscription is deliberately not cancelled: the
     // ReceivePort-backed bridge stream has a cancel future that never
-    // completes (flutter_rust_bridge 2.12). Dropping the engine closes the
+    // completes (flutter_rust_bridge 2.12). Closing the engine closes the
     // notification channel, which stops the Rust pump task and closes the
     // stream from the Rust side instead.
-    _engine.dispose();
+    await _engine.close();
   }
 
   @override

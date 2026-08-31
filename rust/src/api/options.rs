@@ -3,7 +3,7 @@ use serde::Deserialize;
 use std::collections::HashSet;
 use surrealdb_core::dbs::capabilities;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone, PartialEq)]
 pub struct Options {
     /// Query timeout in milliseconds.
     pub query_timeout: Option<u32>,
@@ -12,7 +12,7 @@ pub struct Options {
     pub capabilities: Option<CapabilitiesConfig>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone, PartialEq)]
 #[serde(untagged)]
 pub enum CapabilitiesConfig {
     Bool(bool),
@@ -25,7 +25,7 @@ pub enum CapabilitiesConfig {
     },
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone, PartialEq)]
 #[serde(untagged)]
 pub enum Targets {
     Bool(bool),
@@ -36,7 +36,7 @@ pub enum Targets {
     },
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone, PartialEq)]
 #[serde(untagged)]
 pub enum TargetsConfig {
     Bool(bool),
