@@ -7,11 +7,12 @@ use dashmap::DashMap;
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
-pub use surrealdb_core::kvs::export::{Config, ExcludedTables, TableConfig};
+pub use surrealdb_rpc::export::{Config, ExcludedTables, TableConfig};
 use surrealdb_core::kvs::Datastore;
 use surrealdb_core::rpc::format::cbor;
-pub use surrealdb_core::rpc::Method;
-use surrealdb_core::rpc::{DbResult, RpcProtocol};
+pub use surrealdb_rpc::Method;
+use surrealdb_core::rpc::RpcProtocol;
+use surrealdb_rpc::DbResult;
 use surrealdb_types::{ErrorDetails, HashMap, NotFoundError, SurrealValue, Value};
 
 use anyhow::{anyhow, Result};
@@ -297,7 +298,9 @@ impl SurrealFlutterEngine {
         let Some(connection) = self.connection.load_full() else {
             return Ok(());
         };
-        connection.del_session(&self.default_session).await;
+        // Session teardown must not block the lease release below; the
+        // result was ignored before 3.3 made del_session fallible too.
+        let _ = connection.del_session(&self.default_session).await;
 
         // For shared connections, serialize the release against concurrent
         // attaches with the same tag: an attach that misses the registry in
@@ -360,7 +363,7 @@ impl SurrealFlutterEngine {
         let (tx, rx) = channel::unbounded();
         let session = session.map(|s| Uuid::from_slice(&s)).transpose()?;
         let session_id = session.unwrap_or(self.default_session);
-        let session = engine.get_session(&session_id)?.read().await.clone();
+        let session = engine.get_session(&session_id).await?.read().await.clone();
         let kvs = engine.kvs_arc();
 
         // Run the export in a task so chunks can be forwarded while it is
@@ -395,7 +398,7 @@ impl SurrealFlutterEngine {
         let engine = connection.as_ref();
         let session = session.map(|s| Uuid::from_slice(&s)).transpose()?;
         let session_id = session.unwrap_or(self.default_session);
-        let session_lock = engine.get_session(&session_id)?;
+        let session_lock = engine.get_session(&session_id).await?;
         let session = session_lock.read().await;
         engine.kvs.import(&input, &session).await?;
 
@@ -411,7 +414,7 @@ impl SurrealFlutterEngine {
         let connection = self.conn()?;
         let engine = connection.as_ref();
         let id = Uuid::from_slice(&id)?;
-        let session_lock = engine.get_session(&id)?;
+        let session_lock = engine.get_session(&id).await?;
         let session = session_lock.read().await.clone();
         let session = Arc::new(RwLock::new(session));
         let new_id = Uuid::new_v4();
@@ -423,7 +426,7 @@ impl SurrealFlutterEngine {
         let connection = self.conn()?;
         let engine = connection.as_ref();
         let id = Uuid::from_slice(&id)?;
-        engine.del_session(&id).await;
+        engine.del_session(&id).await?;
         Ok(())
     }
 
@@ -475,27 +478,34 @@ async fn build_connection(
 
     let kvs = builder.build_with_path(endpoint).await?;
 
-    let notifications = Arc::new(NotificationHub::new());
-    let hub = Arc::clone(&notifications);
+    let connection = Arc::new(SurrealFlutterConnection {
+        kvs,
+        sessions: HashMap::new(),
+        notifications: Arc::new(NotificationHub::new()),
+        live_queries: DashMap::new(),
+        endpoint: canonical,
+        opts,
+        leases: std::sync::atomic::AtomicUsize::new(0),
+    });
+
+    let drainer = Arc::clone(&connection);
     tokio::spawn(async move {
         // The single drainer for this datastore: async-channel receivers are
         // competing consumers, so exactly one task may receive here, and it
         // fans every notification out to each subscriber. The loop ends when
         // the datastore is dropped and closes the sending side.
         while let Ok(notification) = notify_rx.recv().await {
-            hub.broadcast(notification);
+            // 3.3 dropped the RpcProtocol::handle_kill hook; the killed live
+            // query's id is only reported through its Action::Killed
+            // notification, so the tracking entry is dropped here.
+            if notification.action == surrealdb_types::Action::Killed {
+                drainer.live_queries.remove(&notification.id);
+            }
+            drainer.notifications.broadcast(notification);
         }
     });
 
-    Ok(Arc::new(SurrealFlutterConnection {
-        kvs: Arc::new(kvs),
-        sessions: HashMap::new(),
-        notifications,
-        live_queries: DashMap::new(),
-        endpoint: canonical,
-        opts,
-        leases: std::sync::atomic::AtomicUsize::new(0),
-    }))
+    Ok(connection)
 }
 
 /// Whether [err] is the SurrealDB 3.x "table does not exist" error, raised
@@ -550,6 +560,7 @@ async fn create_missing_table(
 ) -> Result<()> {
     let session_lock = engine
         .get_session(&session_id)
+        .await
         .map_err(|e| anyhow!(e.to_string()))?;
     let session = session_lock.read().await.clone();
     let define = format!("DEFINE TABLE IF NOT EXISTS {}", escape_surreal_ident(table));

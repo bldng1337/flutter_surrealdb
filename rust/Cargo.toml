@@ -7,13 +7,14 @@ edition = "2021"
 crate-type = ["cdylib", "staticlib"]
 
 [workspace.dependencies]
-surrealdb-core = { version = "=3.2.1" }
-surrealdb-types = { version = "=3.2.1" }
+surrealdb-core = { version = "=3.3.0" }
+surrealdb-types = { version = "=3.3.0" }
 
 [dependencies]
 flutter_rust_bridge = { version = "=2.12.0", features = ["log"] }
 tokio = "1.47.1"
 surrealdb-types = { workspace = true }
+surrealdb-rpc = { version = "=3.3.0" }
 serde = { version = "1.0.219", features = ["derive"] }
 surrealdb-core = { workspace = true, features = ["kv-mem"] }
 channel = { version = "2.3.1", package = "async-channel" }
@@ -50,9 +51,31 @@ lto = true
 codegen-units = 1
 
 [profile.dev]
+# The engine spends its time inside surrealdb-core and friends; opt-level 1
+# codegen there measurably slows every query in debug builds (the 3.3 crate
+# split amplifies this). Optimizing the hot crates keeps debug builds
+# debuggable (line tables only) without the query cost.
 opt-level = 1
-debug="line-tables-only"
+debug = "line-tables-only"
 panic = "unwind"
+
+[profile.dev.package.surrealdb-core]
+opt-level = 3
+
+[profile.dev.package.surrealdb-idx]
+opt-level = 3
+
+[profile.dev.package.surrealdb-datastore]
+opt-level = 3
+
+[profile.dev.package.surrealdb-kvs]
+opt-level = 3
+
+[profile.dev.package.surrealdb-expr]
+opt-level = 3
+
+[profile.dev.package.surrealdb-collections]
+opt-level = 3
 
 [build-dependencies]
 cargo-lock = "10.0.1"

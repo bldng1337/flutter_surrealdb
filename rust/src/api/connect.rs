@@ -8,7 +8,8 @@ use lazy_static::lazy_static;
 
 use surrealdb_core::dbs::Session;
 use surrealdb_core::kvs::Datastore;
-use surrealdb_core::rpc::{DbResult, RpcProtocol};
+use surrealdb_core::rpc::RpcProtocol;
+use surrealdb_rpc::DbResult;
 use surrealdb_types::{HashMap, Notification, Value};
 use tokio::sync::RwLock;
 use uuid::Uuid;
@@ -161,11 +162,6 @@ impl RpcProtocol for SurrealFlutterConnection {
                 db: database,
             },
         );
-    }
-
-    /// Forgets a live query once it has been killed.
-    async fn handle_kill(&self, lqid: &Uuid) {
-        self.live_queries.remove(lqid);
     }
 
     /// Kills all live queries belonging to [session_id].
