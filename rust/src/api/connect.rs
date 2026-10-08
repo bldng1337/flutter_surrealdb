@@ -1,19 +1,32 @@
 use std::path::Path;
 use std::sync::atomic::AtomicUsize;
 use std::sync::Arc;
+use std::time::Duration;
 
 use dashmap::DashMap;
 use flutter_rust_bridge::frb;
 use lazy_static::lazy_static;
 
 use surrealdb_core::dbs::Session;
-use surrealdb_core::kvs::Datastore;
+use surrealdb_core::kvs::{Datastore, QueryRequest, QuerySource};
 use surrealdb_core::rpc::RpcProtocol;
-use surrealdb_rpc::DbResult;
-use surrealdb_types::{HashMap, Notification, Value};
+use surrealdb_core::rpc::types_error_from_anyhow;
+use surrealdb_datastore::Transaction;
+use surrealdb_kvs::TransactionType;
+use surrealdb_rpc::args::extract_args;
+use surrealdb_rpc::capabilities::ExperimentalTarget;
+use surrealdb_rpc::{DbResult, Method};
+use surrealdb_sql::{
+    Ast, Data, Expr, Function, FunctionCall, Literal, Model, Output, RelateStatement, TableName,
+    UpdateStatement,
+};
+use surrealdb_types::{
+    Array, HashMap, NotAllowedError, Notification, RecordIdKey, ValidationError, Value,
+};
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
+use crate::api::engine::is_transaction_conflict;
 use crate::api::options::Options;
 
 lazy_static! {
@@ -81,6 +94,12 @@ pub(crate) struct SurrealFlutterConnection {
     pub notifications: Arc<NotificationHub>,
     /// Live queries created through this connection, keyed by live query id.
     pub live_queries: DashMap<Uuid, TrackedLiveQuery>,
+    /// Client-managed transactions opened through `begin`, keyed by
+    /// transaction id. Statements join one by naming its id on the call.
+    pub txns: DashMap<Uuid, Arc<Transaction>>,
+    /// The session that opened each transaction, so a detached, reset or
+    /// closed session cannot leak a write transaction.
+    pub txn_sessions: DashMap<Uuid, Uuid>,
     /// Canonical form of the endpoint this connection was opened with; used
     /// to reject share-tag attaches that name a different endpoint.
     pub endpoint: String,
@@ -110,7 +129,19 @@ impl SurrealFlutterConnection {
             // A Uuid always renders in its hyphenated hexadecimal form, so
             // this text query cannot be injected with SurrealQL.
             let kill = format!("KILL u'{lqid}'");
-            let _ = self.kvs.execute(&kill, &session, None).await;
+            // A KILL that lost a transaction-conflict race is retried: the
+            // caller's session teardown only completes correctly when the
+            // kill actually lands, so a conflict must not silently swallow it.
+            let mut attempt = 0u32;
+            loop {
+                match self.kvs.execute(&kill, &session, None).await {
+                    Err(err) if attempt < 3 && is_transaction_conflict(&err) => {
+                        attempt += 1;
+                        tokio::time::sleep(Duration::from_millis(10 * attempt as u64)).await;
+                    }
+                    _ => break,
+                }
+            }
         }
     }
 }
@@ -187,6 +218,446 @@ impl RpcProtocol for SurrealFlutterConnection {
             .collect::<Vec<_>>();
         self.live_queries.clear();
         self.kill_live_queries(queries).await;
+    }
+
+    // ------------------------------
+    // Transactions
+    // ------------------------------
+
+    async fn get_tx(&self, id: Uuid) -> Result<Arc<Transaction>, surrealdb_types::Error> {
+        self.txns
+            .get(&id)
+            .map(|entry| Arc::clone(entry.value()))
+            .ok_or_else(|| unknown_transaction(id))
+    }
+
+    async fn set_tx(&self, id: Uuid, tx: Arc<Transaction>) -> Result<(), surrealdb_types::Error> {
+        self.txns.insert(id, tx);
+        Ok(())
+    }
+
+    /// Opens a client-managed transaction and returns its id. Statements join
+    /// it by naming the id on their call; it stays open (and holds its write
+    /// set) until `commit` or `cancel` names the id, or the owning session is
+    /// detached, reset or deleted.
+    async fn begin(
+        &self,
+        txn: Option<Uuid>,
+        session_id: Uuid,
+    ) -> Result<DbResult, surrealdb_types::Error> {
+        if txn.is_some() {
+            return Err(surrealdb_types::Error::validation(
+                "Cannot begin a transaction inside another transaction".to_string(),
+                Some(ValidationError::InvalidParams),
+            ));
+        }
+        let tx = self
+            .kvs
+            .transaction(TransactionType::Write)
+            .await
+            .map_err(types_error_from_anyhow)?;
+        let id = Uuid::new_v4();
+        self.txns.insert(id, Arc::new(tx));
+        self.txn_sessions.insert(id, session_id);
+        Ok(DbResult::Other(Value::Uuid(id.into())))
+    }
+
+    /// Commits the client-managed transaction named by the call's first
+    /// parameter and removes it from this connection.
+    async fn commit(
+        &self,
+        _txn: Option<Uuid>,
+        _session_id: Uuid,
+        params: Array,
+    ) -> Result<DbResult, surrealdb_types::Error> {
+        let (_id, tx) = self.take_tx(params).await?;
+        if let Err(err) = tx.commit().await {
+            // The commit failed; roll back so the transaction's write set and
+            // locks are released instead of lingering as finished-but-open.
+            let _ = tx.cancel().await;
+            return Err(types_error_from_anyhow(err));
+        }
+        Ok(DbResult::Other(Value::None))
+    }
+
+    /// Cancels (rolls back) the client-managed transaction named by the
+    /// call's first parameter and removes it from this connection.
+    async fn cancel(
+        &self,
+        _txn: Option<Uuid>,
+        _session_id: Uuid,
+        params: Array,
+    ) -> Result<DbResult, surrealdb_types::Error> {
+        let (_id, tx) = self.take_tx(params).await?;
+        tx.cancel().await.map_err(types_error_from_anyhow)?;
+        Ok(DbResult::Other(Value::None))
+    }
+
+    /// Cancels every transaction opened by [session_id]. Runs when the
+    /// session is detached, reset or deleted, so a session teardown cannot
+    /// leak a write transaction.
+    async fn cleanup_txns(&self, session_id: &Uuid) {
+        let owned = self
+            .txn_sessions
+            .iter()
+            .filter(|entry| entry.value() == session_id)
+            .map(|entry| *entry.key())
+            .collect::<Vec<_>>();
+        for id in owned {
+            self.txn_sessions.remove(&id);
+            if let Some((_, tx)) = self.txns.remove(&id) {
+                let _ = tx.cancel().await;
+            }
+        }
+    }
+
+    // ------------------------------
+    // Statement methods that must honor a transaction
+    // ------------------------------
+
+    // SurrealDB 3.3.0's own RPC handlers for `update`, `patch`, `relate` and
+    // `run` take the transaction argument but ignore it: they execute through
+    // `Datastore::process`, which runs outside every client-managed
+    // transaction, so a statement sent inside an explicit transaction would
+    // silently escape it (while `query`, `select`, `create`, ... honor it).
+    // The overrides below repeat the upstream handlers statement-for-statement
+    // and route through `Datastore::run` with the transaction attached.
+
+    async fn update(
+        &self,
+        txn: Option<Uuid>,
+        session_id: Uuid,
+        params: Array,
+    ) -> Result<DbResult, surrealdb_types::Error> {
+        let session_lock = self.get_session(&session_id).await?;
+        let session = session_lock.read().await;
+        if !self.kvs().allows_query_by_subject(session.au.as_ref()) {
+            return Err(method_not_allowed(Method::Update));
+        }
+        let (what, data) = extract_args::<(Value, Option<Value>)>(params.into_vec())
+            .ok_or_else(|| invalid_params("Expected (what, data)".to_string()))?;
+        let only = match &what {
+            Value::RecordId(x) => !matches!(x.key, RecordIdKey::Range(_)),
+            _ => false,
+        };
+        let data = data
+            .and_then(|x| if x.is_nullish() { None } else { Some(x) })
+            .map(|x| Data::ContentExpression(Expr::from_public_value(x)));
+        let expr = Expr::Update(Box::new(UpdateStatement {
+            only,
+            what: vec![value_to_table(what)],
+            data,
+            output: Some(Output::After),
+            with: None,
+            cond: None,
+            timeout: Expr::Literal(Literal::None),
+            explain: None,
+        }));
+        self.run_statement_txn(txn, &session, Ast::single_expr(expr)).await
+    }
+
+    async fn patch(
+        &self,
+        txn: Option<Uuid>,
+        session_id: Uuid,
+        params: Array,
+    ) -> Result<DbResult, surrealdb_types::Error> {
+        let session_lock = self.get_session(&session_id).await?;
+        let session = session_lock.read().await;
+        if !self.kvs().allows_query_by_subject(session.au.as_ref()) {
+            return Err(method_not_allowed(Method::Patch));
+        }
+        let (what, data, diff) =
+            extract_args::<(Value, Option<Value>, Option<Value>)>(params.into_vec())
+                .ok_or_else(|| invalid_params("Expected (what:Value, data:Value, diff:Value)".to_string()))?;
+        let only = match &what {
+            Value::RecordId(x) => !matches!(x.key, RecordIdKey::Range(_)),
+            _ => false,
+        };
+        let data = data
+            .and_then(|x| if x.is_nullish() { None } else { Some(x) })
+            .map(|x| Data::PatchExpression(Expr::from_public_value(x)));
+        let diff = matches!(diff, Some(Value::Bool(true)));
+        let expr = Expr::Update(Box::new(UpdateStatement {
+            only,
+            what: vec![value_to_table(what)],
+            data,
+            output: if diff {
+                Some(Output::Diff)
+            } else {
+                Some(Output::After)
+            },
+            with: None,
+            cond: None,
+            timeout: Expr::Literal(Literal::None),
+            explain: None,
+        }));
+        self.run_statement_txn(txn, &session, Ast::single_expr(expr)).await
+    }
+
+    async fn relate(
+        &self,
+        txn: Option<Uuid>,
+        session_id: Uuid,
+        params: Array,
+    ) -> Result<DbResult, surrealdb_types::Error> {
+        let session_lock = self.get_session(&session_id).await?;
+        let session = session_lock.read().await;
+        if !self.kvs().allows_query_by_subject(session.au.as_ref()) {
+            return Err(method_not_allowed(Method::Relate));
+        }
+        let (from, kind, with, data) =
+            extract_args::<(Value, Value, Value, Option<Value>)>(params.into_vec())
+                .ok_or_else(|| invalid_params("Expected (from:Value, kind:Value, with:Value, data:Value)".to_string()))?;
+        let only = singular(&from) && singular(&with);
+        let data = data
+            .and_then(|x| if x.is_nullish() { None } else { Some(x) })
+            .map(|x| Data::ContentExpression(Expr::from_public_value(x)));
+        let expr = Expr::Relate(Box::new(RelateStatement {
+            only,
+            or_update: false,
+            from: Expr::from_public_value(from),
+            through: value_to_table(kind),
+            to: Expr::from_public_value(with),
+            data,
+            output: Some(Output::After),
+            timeout: Expr::Literal(Literal::None),
+        }));
+        self.run_statement_txn(txn, &session, Ast::single_expr(expr)).await
+    }
+
+    async fn run(
+        &self,
+        txn: Option<Uuid>,
+        session_id: Uuid,
+        params: Array,
+    ) -> Result<DbResult, surrealdb_types::Error> {
+        let session_lock = self.get_session(&session_id).await?;
+        let session = session_lock.read().await;
+        if !self.kvs().allows_query_by_subject(session.au.as_ref()) {
+            return Err(method_not_allowed(Method::Run));
+        }
+        let (name, version, args) = extract_args::<(Value, Option<Value>, Option<Value>)>(
+            params.into_vec(),
+        )
+        .ok_or_else(|| invalid_params("Expected (name:string, version:string, args:array)".to_string()))?;
+        let name = match name {
+            Value::String(v) => v,
+            unexpected => {
+                return Err(invalid_params(format!(
+                    "Expected name to be string, got {unexpected:?}"
+                )));
+            }
+        };
+        let version = match version {
+            Some(Value::String(v)) => Some(v),
+            None | Some(Value::None | Value::Null) => None,
+            unexpected => {
+                return Err(invalid_params(format!(
+                    "Expected version to be string, got {unexpected:?}"
+                )));
+            }
+        };
+        let args = match args {
+            Some(Value::Array(args)) => {
+                args.into_iter().map(Expr::from_public_value).collect::<Vec<Expr>>()
+            }
+            None | Some(Value::None | Value::Null) => vec![],
+            unexpected => {
+                return Err(invalid_params(format!(
+                    "Expected args to be array, got {unexpected:?}"
+                )));
+            }
+        };
+
+        let segments = name.split("::").collect::<Vec<&str>>();
+        let name = match segments.first() {
+            Some(&"fn") => Function::Custom(segments[1..].join("::")),
+            Some(&"mod") => {
+                if !self
+                    .kvs()
+                    .get_capabilities()
+                    .allows_experimental(&ExperimentalTarget::Surrealism)
+                {
+                    return Err(invalid_params(
+                        "Experimental capability `surrealism` is not enabled".to_string(),
+                    ));
+                }
+                let Some(name) = segments.get(1).map(|x| (*x).to_string()) else {
+                    return Err(invalid_params("Expected module name".to_string()));
+                };
+                let sub = if segments.len() > 2 {
+                    Some(segments[2..].join("::"))
+                } else {
+                    None
+                };
+                Function::Module(name, sub)
+            }
+            Some(&"silo") => {
+                if !self
+                    .kvs()
+                    .get_capabilities()
+                    .allows_experimental(&ExperimentalTarget::Surrealism)
+                {
+                    return Err(invalid_params(
+                        "Experimental capability `surrealism` is not enabled".to_string(),
+                    ));
+                }
+                let Some(org) = segments.get(1).map(|x| (*x).to_string()) else {
+                    return Err(invalid_params(
+                        "Expected silo organisation name".to_string(),
+                    ));
+                };
+                let Some(pkg) = segments.get(2).map(|x| (*x).to_string()) else {
+                    return Err(invalid_params("Expected silo package name".to_string()));
+                };
+                let Some(version) = version else {
+                    return Err(invalid_params("Expected silo version".to_string()));
+                };
+                let mut split = version.split('.');
+                let major = split.next().and_then(|s| s.parse::<u32>().ok()).ok_or_else(|| {
+                    invalid_params("Expected major version (u32) in version string".to_string())
+                })?;
+                let minor = split.next().and_then(|s| s.parse::<u32>().ok()).ok_or_else(|| {
+                    invalid_params("Expected minor version (u32) in version string".to_string())
+                })?;
+                let patch = split.next().and_then(|s| s.parse::<u32>().ok()).ok_or_else(|| {
+                    invalid_params("Expected patch version (u32) in version string".to_string())
+                })?;
+                let sub = if segments.len() > 3 {
+                    Some(segments[3..].join("::"))
+                } else {
+                    None
+                };
+                Function::Silo {
+                    org,
+                    pkg,
+                    major,
+                    minor,
+                    patch,
+                    sub,
+                }
+            }
+            Some(&"ml") => {
+                let name = segments[1..].join("::");
+                Function::Model(Model {
+                    name: name.into(),
+                    version: version
+                        .ok_or_else(|| {
+                            invalid_params(
+                                "Expected version to be set for model function".to_string(),
+                            )
+                        })?
+                        .into(),
+                })
+            }
+            _ => Function::Normal(name),
+        };
+
+        let expr = Expr::FunctionCall(Box::new(FunctionCall {
+            receiver: name,
+            arguments: args,
+        }));
+        self.run_statement_txn(txn, &session, Ast::single_expr(expr)).await
+    }
+}
+
+impl SurrealFlutterConnection {
+    /// Runs one parsed statement inside [txn] when given, mirroring how the
+    /// core `query` handler routes through `Datastore::run`.
+    async fn run_statement_txn(
+        &self,
+        txn: Option<Uuid>,
+        session: &Session,
+        ast: Ast,
+    ) -> Result<DbResult, surrealdb_types::Error> {
+        let transaction = match txn {
+            Some(id) => Some(self.get_tx(id).await?),
+            None => None,
+        };
+        let mut res = self
+            .kvs
+            .run(
+                QueryRequest::new(QuerySource::Ast(ast), session)
+                    .with_variables(Some(session.variables.clone()))
+                    .with_optional_transaction(transaction),
+            )
+            .await?;
+        let first = res.remove(0).result?;
+        Ok(DbResult::Other(first))
+    }
+
+    /// Removes the transaction named by the first parameter of a `commit` /
+    /// `cancel` call, returning its id and handle. Removing before committing
+    /// means a transaction can only ever be finalized once.
+    async fn take_tx(
+        &self,
+        params: Array,
+    ) -> Result<(Uuid, Arc<Transaction>), surrealdb_types::Error> {
+        let id = extract_txn_id(params)?;
+        let tx = self
+            .txns
+            .remove(&id)
+            .map(|(_, tx)| tx)
+            .ok_or_else(|| unknown_transaction(id))?;
+        self.txn_sessions.remove(&id);
+        Ok((id, tx))
+    }
+}
+
+/// Reads the transaction id argument of a `commit` / `cancel` call: a UUID
+/// value, or a string parsing as one (the RPC layer also accepts strings for
+/// UUID-typed arguments).
+fn extract_txn_id(params: Array) -> Result<Uuid, surrealdb_types::Error> {
+    let invalid = || {
+        surrealdb_types::Error::validation(
+            "Expected a transaction id (uuid) as the first parameter".to_string(),
+            Some(ValidationError::InvalidParams),
+        )
+    };
+    match params.into_vec().into_iter().next() {
+        Some(Value::Uuid(id)) => Ok(uuid::Uuid::from(id)),
+        Some(Value::String(s)) => s.parse::<Uuid>().map_err(|_| invalid()),
+        _ => Err(invalid()),
+    }
+}
+
+fn unknown_transaction(id: Uuid) -> surrealdb_types::Error {
+    surrealdb_types::Error::validation(
+        format!("Transaction '{id}' not found"),
+        Some(ValidationError::InvalidParams),
+    )
+}
+
+fn invalid_params(message: String) -> surrealdb_types::Error {
+    surrealdb_types::Error::validation(message, Some(ValidationError::InvalidParams))
+}
+
+fn method_not_allowed(method: Method) -> surrealdb_types::Error {
+    surrealdb_types::Error::not_allowed(
+        format!("Method '{method}' is not allowed"),
+        Some(NotAllowedError::Method {
+            name: method.to_string(),
+        }),
+    )
+}
+
+/// Whether [value] names a single record rather than a set of them; used to
+/// decide the `ONLY` semantics of a relate.
+fn singular(value: &Value) -> bool {
+    match value {
+        Value::Object(_) => true,
+        Value::RecordId(t) => !matches!(t.key, RecordIdKey::Range(_)),
+        _ => false,
+    }
+}
+
+/// Converts the `what` argument of a statement method into a table
+/// expression; non-string values (record ids, ranges) stay value expressions.
+fn value_to_table(value: Value) -> Expr {
+    match value {
+        Value::String(s) => Expr::Table(TableName::new(s)),
+        x => Expr::from_public_value(x),
     }
 }
 

@@ -81,6 +81,63 @@ class SurrealDB {
     await _engine.set(key, value);
   }
 
+  // TRANSACTIONS
+
+  /// Runs [body] inside a transaction.
+  ///
+  /// Every statement [body] runs through the passed [SurrealTransaction]
+  /// executes atomically: when [body] completes normally the transaction is
+  /// committed, and when it throws the transaction is rolled back and the
+  /// error is rethrown. This mirrors SurrealQL's `BEGIN ... COMMIT` /
+  /// `BEGIN ... CANCEL` blocks:
+  ///
+  /// ```dart
+  /// await db.transaction((txn) async {
+  ///   await txn.create(const DBTable('account'), {'balance': 100});
+  ///   await txn.create(const DBTable('log'), {'event': 'opened'});
+  /// });
+  /// ```
+  ///
+  /// An explicit [SurrealTransaction.commit] inside [body] wins: if [body]
+  /// completes (or throws) afterwards, no second commit or rollback is
+  /// attempted. Statements must go through the passed transaction object to
+  /// join it; calls made directly on the [SurrealDB] instance run outside it.
+  ///
+  /// A transaction that is neither committed nor cancelled (for example an
+  /// abandoned [SurrealTransaction] from [beginTransaction]) is rolled back
+  /// automatically when its connection is disposed or its session is closed.
+  Future<T> transaction<T>(
+      Future<T> Function(SurrealTransaction txn) body) async {
+    final txn = await beginTransaction();
+    try {
+      final result = await body(txn);
+      if (!txn._finished) {
+        await txn.commit();
+      }
+      return result;
+    } on Object {
+      // Roll back on any failure. A rollback error (engine gone, connection
+      // closing) must not mask the original one, so it is swallowed here;
+      // an un-finalized transaction also dies with the session anyway.
+      if (!txn._finished) {
+        try {
+          await txn.cancel();
+        } catch (_) {}
+      }
+      rethrow;
+    }
+  }
+
+  /// Begins a transaction and returns it, for manual commit/rollback control.
+  ///
+  /// Statements run through the returned [SurrealTransaction] execute inside
+  /// it; finish it with [SurrealTransaction.commit] or
+  /// [SurrealTransaction.cancel]. Prefer [transaction] unless the commit
+  /// decision depends on control flow the callback shape cannot express.
+  Future<SurrealTransaction> beginTransaction() async {
+    return SurrealTransaction._(_engine, await _engine.beginTransaction());
+  }
+
   /// Removes a session variable from the current connection.
   ///
   /// This corresponds to the 'unset' RPC method.
@@ -103,18 +160,7 @@ class SurrealDB {
   /// Returns: List of results.
   Future<dynamic> query(String query, {Map<String, dynamic>? vars}) async {
     final res = await _engine.query(query, vars: vars);
-    if (res == null || res is! Iterable) {
-      throw StateError(
-          "Invalid response from query: expected an Iterable got ${res.runtimeType}");
-    }
-    for (final e in res) {
-      if (e is Map && (e["error"] != null || e["status"] == "ERR")) {
-        // For an errored statement the message is carried in the 'result'
-        // field (the 'error' key is checked for older wire shapes).
-        throw QueryError("${e["error"] ?? e["result"]}");
-      }
-    }
-    return res.map((e) => e is Map ? e["result"] : e).toList();
+    return unwrapQueryResults(res);
   }
 
   /// Selects either all records in a table or a single record.
@@ -147,7 +193,8 @@ class SurrealDB {
   /// - [table]: The table to watch.
   /// - [diff]: If true, notifications contain JSON patches instead of full records.
   /// - [session]: Optional session ID.
-  Stream<Notification> live(DBTable table, {bool? diff, UuidValue? session}) async* {
+  Stream<Notification> live(DBTable table,
+      {bool? diff, UuidValue? session}) async* {
     yield* liveOf(await _engine.live(table, diff: diff, session: session),
         session: session);
   }
@@ -338,8 +385,7 @@ class SurrealDB {
   /// - [outRecord]: The target record.
   /// - [data]: Optional data to store on the edge.
   /// Returns: The created relation.
-  Future<dynamic> relate(
-      Resource inRecord, String relation, Resource outRecord,
+  Future<dynamic> relate(Resource inRecord, String relation, Resource outRecord,
       {dynamic data}) async {
     return await _engine.relate(inRecord, relation, outRecord, data: data);
   }
@@ -457,4 +503,151 @@ class SurrealDB {
   Future<void> dispose() async {
     await _engine.dispose();
   }
+}
+
+/// A client-managed transaction on a [SurrealDB] connection.
+///
+/// Obtained from [SurrealDB.transaction] (auto commit/rollback) or
+/// [SurrealDB.beginTransaction] (manual). Every statement run through this
+/// object executes atomically with the others; statements made directly on
+/// the [SurrealDB] instance are not part of the transaction.
+///
+/// The transaction must be finished exactly once with [commit] or [cancel].
+/// Using it after that throws [StateError].
+class SurrealTransaction {
+  final RPCEngine _engine;
+
+  /// The id of the transaction on the database. Statements join it by
+  /// naming this id; it is exposed for advanced uses (e.g. logging) and is
+  /// not needed to run statements through this object.
+  final UuidValue id;
+
+  bool _finished = false;
+
+  SurrealTransaction._(this._engine, this.id);
+
+  void _ensureOpen() {
+    if (_finished) {
+      throw StateError(
+          'This transaction has already been committed or cancelled');
+    }
+  }
+
+  /// Commits the transaction, making its changes durable.
+  ///
+  /// Throws [StateError] if the transaction was already committed or
+  /// cancelled.
+  Future<void> commit() async {
+    _ensureOpen();
+    _finished = true;
+    await _engine.commitTransaction(id);
+  }
+
+  /// Cancels the transaction, discarding its changes.
+  ///
+  /// Throws [StateError] if the transaction was already committed or
+  /// cancelled.
+  Future<void> cancel() async {
+    _ensureOpen();
+    _finished = true;
+    await _engine.cancelTransaction(id);
+  }
+
+  /// Executes a custom SurrealQL query inside this transaction.
+  ///
+  /// Behaves like [SurrealDB.query]: statement envelopes are unwrapped to
+  /// their results and an errored statement throws [QueryError].
+  Future<dynamic> query(String query, {Map<String, dynamic>? vars}) async {
+    _ensureOpen();
+    final res = await _engine.query(query, vars: vars, txn: id);
+    return unwrapQueryResults(res);
+  }
+
+  /// Selects a table or record inside this transaction.
+  Future<dynamic> select(Resource thing) async {
+    _ensureOpen();
+    return await _engine.select(thing, txn: id);
+  }
+
+  /// Creates a record inside this transaction.
+  Future<dynamic> create(Resource res, dynamic data) async {
+    _ensureOpen();
+    return await _engine.create(res, data, txn: id);
+  }
+
+  /// Inserts one or multiple records inside this transaction.
+  Future<List<dynamic>> insert(DBTable thing, dynamic data) async {
+    _ensureOpen();
+    return await _engine.insert(thing, data, txn: id);
+  }
+
+  /// Inserts a relation record inside this transaction.
+  Future<dynamic> insertRelation(DBTable table, dynamic data) async {
+    _ensureOpen();
+    return await _engine.insertRelation(table, data, txn: id);
+  }
+
+  /// Replaces a table or record inside this transaction.
+  Future<dynamic> update(Resource thing, dynamic data) async {
+    _ensureOpen();
+    return await _engine.update(thing, data, txn: id);
+  }
+
+  /// Replaces a table or record inside this transaction if it exists,
+  /// creating it otherwise.
+  Future<dynamic> upsert(Resource thing, dynamic data) async {
+    _ensureOpen();
+    return await _engine.upsert(thing, data, txn: id);
+  }
+
+  /// Merges data into a table or record inside this transaction.
+  Future<dynamic> merge(Resource thing, dynamic data) async {
+    _ensureOpen();
+    return await _engine.merge(thing, data, txn: id);
+  }
+
+  /// Applies JSON Patch operations inside this transaction.
+  Future<dynamic> patch(Resource thing, List<Map<String, dynamic>> patches,
+      {bool? diff}) async {
+    _ensureOpen();
+    return await _engine.patch(thing, patches, diff: diff, txn: id);
+  }
+
+  /// Deletes a table or record inside this transaction.
+  Future<dynamic> delete(Resource thing) async {
+    _ensureOpen();
+    return await _engine.delete(thing, txn: id);
+  }
+
+  /// Creates a graph edge inside this transaction.
+  Future<dynamic> relate(Resource inRecord, String relation, Resource outRecord,
+      {dynamic data}) async {
+    _ensureOpen();
+    return await _engine.relate(inRecord, relation, outRecord,
+        data: data, txn: id);
+  }
+
+  /// Executes a function inside this transaction.
+  Future<dynamic> run(String function,
+      {List<dynamic>? args, String? version}) async {
+    _ensureOpen();
+    return await _engine.run(function, args: args, version: version, txn: id);
+  }
+}
+
+/// Validates a raw multi-statement query response and extracts the result of
+/// each statement, throwing [QueryError] for an errored one.
+dynamic unwrapQueryResults(dynamic res) {
+  if (res == null || res is! Iterable) {
+    throw StateError(
+        "Invalid response from query: expected an Iterable got ${res.runtimeType}");
+  }
+  for (final e in res) {
+    if (e is Map && (e["error"] != null || e["status"] == "ERR")) {
+      // For an errored statement the message is carried in the 'result'
+      // field (the 'error' key is checked for older wire shapes).
+      throw QueryError("${e["error"] ?? e["result"]}");
+    }
+  }
+  return res.map((e) => e is Map ? e["result"] : e).toList();
 }

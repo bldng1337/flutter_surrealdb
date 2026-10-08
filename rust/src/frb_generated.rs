@@ -293,6 +293,7 @@ fn wire__crate__api__engine__SurrealFlutterEngine_execute_impl(
             let api_method = <crate::api::engine::Method>::sse_decode(&mut deserializer);
             let api_params = <Vec<u8>>::sse_decode(&mut deserializer);
             let api_session = <Option<Vec<u8>>>::sse_decode(&mut deserializer);
+            let api_txn = <Option<Vec<u8>>>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| async move {
                 transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
@@ -319,6 +320,7 @@ fn wire__crate__api__engine__SurrealFlutterEngine_execute_impl(
                             api_method,
                             api_params,
                             api_session,
+                            api_txn,
                         )
                         .await?;
                         Ok(output_ok)

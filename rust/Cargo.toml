@@ -12,9 +12,18 @@ surrealdb-types = { version = "=3.3.0" }
 
 [dependencies]
 flutter_rust_bridge = { version = "=2.12.0", features = ["log"] }
-tokio = "1.47.1"
+tokio = { version = "1.47.1", features = ["rt", "sync", "time"] }
 surrealdb-types = { workspace = true }
 surrealdb-rpc = { version = "=3.3.0" }
+# The client-managed transaction hooks of RpcProtocol (get_tx / set_tx /
+# begin / commit / cancel) are typed on the datastore layer's Transaction,
+# which core re-exports only as pub(crate); depend on these crates directly
+# to name those types from outside core.
+surrealdb-kvs = { version = "=3.3.0" }
+surrealdb-datastore = { version = "=3.3.0" }
+# Used to rebuild the handful of RPC statement handlers that must honor a
+# client-managed transaction (see connect.rs).
+surrealdb-sql = { version = "=3.3.0" }
 serde = { version = "1.0.219", features = ["derive"] }
 surrealdb-core = { workspace = true, features = ["kv-mem"] }
 channel = { version = "2.3.1", package = "async-channel" }

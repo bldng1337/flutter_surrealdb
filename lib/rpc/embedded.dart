@@ -42,13 +42,14 @@ class RustEngine with RPCEngine {
 
   @override
   Future<dynamic> execute(Method method, List<dynamic> params,
-      {UuidValue? session}) async {
+      {UuidValue? session, UuidValue? txn}) async {
     final res = await _engine.execute(
       method: method,
       params: cbor.encode(
         encodeDBData(params),
       ),
       session: session?.toBytes(),
+      txn: txn?.toBytes(),
     );
     return decodeDBData(cbor.decode(res));
   }

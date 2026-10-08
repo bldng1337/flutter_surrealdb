@@ -101,7 +101,8 @@ abstract class RustLibApi extends BaseApi {
       {required SurrealFlutterEngine that,
       required Method method,
       required List<int> params,
-      Uint8List? session});
+      Uint8List? session,
+      Uint8List? txn});
 
   Stream<Uint8List> crateApiEngineSurrealFlutterEngineExportStream(
       {required SurrealFlutterEngine that, Config? config, Uint8List? session});
@@ -255,7 +256,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       {required SurrealFlutterEngine that,
       required Method method,
       required List<int> params,
-      Uint8List? session}) {
+      Uint8List? session,
+      Uint8List? txn}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
@@ -264,6 +266,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_method(method, serializer);
         sse_encode_list_prim_u_8_loose(params, serializer);
         sse_encode_opt_list_prim_u_8_strict(session, serializer);
+        sse_encode_opt_list_prim_u_8_strict(txn, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
             funcId: 5, port: port_);
       },
@@ -272,7 +275,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         decodeErrorData: sse_decode_AnyhowException,
       ),
       constMeta: kCrateApiEngineSurrealFlutterEngineExecuteConstMeta,
-      argValues: [that, method, params, session],
+      argValues: [that, method, params, session, txn],
       apiImpl: this,
     ));
   }
@@ -280,7 +283,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiEngineSurrealFlutterEngineExecuteConstMeta =>
       const TaskConstMeta(
         debugName: "SurrealFlutterEngine_execute",
-        argNames: ["that", "method", "params", "session"],
+        argNames: ["that", "method", "params", "session", "txn"],
       );
 
   @override
@@ -1719,9 +1722,14 @@ class SurrealFlutterEngineImpl extends RustOpaque
   Future<Uint8List> execute(
           {required Method method,
           required List<int> params,
-          Uint8List? session}) =>
+          Uint8List? session,
+          Uint8List? txn}) =>
       RustLib.instance.api.crateApiEngineSurrealFlutterEngineExecute(
-          that: this, method: method, params: params, session: session);
+          that: this,
+          method: method,
+          params: params,
+          session: session,
+          txn: txn);
 
   /// Streams the database export to [sink] in chunks instead of buffering
   /// the whole export in memory. Cancelling the Dart-side stream aborts the

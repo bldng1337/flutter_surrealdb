@@ -13,7 +13,7 @@ use surrealdb_core::rpc::format::cbor;
 pub use surrealdb_rpc::Method;
 use surrealdb_core::rpc::RpcProtocol;
 use surrealdb_rpc::DbResult;
-use surrealdb_types::{ErrorDetails, HashMap, NotFoundError, SurrealValue, Value};
+use surrealdb_types::{ErrorDetails, HashMap, NotFoundError, QueryError, SurrealValue, Value};
 
 use anyhow::{anyhow, Result};
 
@@ -160,6 +160,7 @@ impl SurrealFlutterEngine {
         method: Method,
         params: Vec<u8>,
         session: Option<Vec<u8>>,
+        txn: Option<Vec<u8>>,
     ) -> Result<Vec<u8>> {
         let connection = self.conn()?;
         let engine = connection.as_ref();
@@ -167,33 +168,61 @@ impl SurrealFlutterEngine {
         let client_session = session.map(|s| Uuid::from_slice(&s)).transpose()?;
         let session_id = client_session.unwrap_or(self.default_session);
         let params = params.into_array()?;
+        let txn = txn.map(|t| Uuid::from_slice(&t)).transpose()?;
 
-        let res = match RpcProtocol::execute(
-            engine,
-            None,
-            session_id,
-            client_session,
-            method,
-            params.clone(),
-        )
-        .await
-        {
-            Ok(res) => res,
-            // SurrealDB 3.x requires a table to exist before SELECT/LIVE can
-            // run against it, so a table that was never written to or defined
-            // fails with NotFoundError::Table. Normalize this at the bridge so
-            // a table that simply doesn't exist yet behaves like an empty
-            // table, matching the pre-3.x behaviour of this engine.
-            Err(err) if is_missing_table(&err) => missing_table_fallback(
+        // Concurrent statements on one datastore race their write
+        // transactions; on an optimistic backend like surrealkv the loser
+        // comes back with a transaction conflict instead of blocking. A
+        // conflicted statement was rolled back whole, so it is retried here
+        // with a short backoff rather than surfacing the conflict to the
+        // client (two engines attaching to one connection and both starting
+        // a live query is enough to hit it). Excluded from the retry:
+        // statements joining a client-managed transaction, and commit/cancel
+        // - their handler removes the transaction before finalizing it, so a
+        // conflict there has already consumed it and cannot be replayed.
+        let mut attempt = 0u32;
+        let res = loop {
+            match RpcProtocol::execute(
                 engine,
-                err,
-                method,
-                &params,
+                txn,
                 session_id,
                 client_session,
+                method,
+                params.clone(),
             )
-            .await?,
-            Err(err) => return Err(err.into()),
+            .await
+            {
+                Ok(res) => break res,
+                Err(err)
+                    if txn.is_none()
+                        && !matches!(method, Method::Commit | Method::Cancel)
+                        && is_transaction_conflict(&err) =>
+                {
+                    attempt += 1;
+                    if attempt > MAX_CONFLICT_RETRIES {
+                        return Err(err.into());
+                    }
+                    tokio::time::sleep(CONFLICT_RETRY_BACKOFF * attempt).await;
+                }
+                // SurrealDB 3.x requires a table to exist before SELECT/LIVE can
+                // run against it, so a table that was never written to or defined
+                // fails with NotFoundError::Table. Normalize this at the bridge so
+                // a table that simply doesn't exist yet behaves like an empty
+                // table, matching the pre-3.x behaviour of this engine.
+                Err(err) if is_missing_table(&err) => {
+                    break missing_table_fallback(
+                        engine,
+                        err,
+                        method,
+                        &params,
+                        session_id,
+                        client_session,
+                        txn,
+                    )
+                    .await?
+                }
+                Err(err) => return Err(err.into()),
+            }
         };
 
         let value: Value = res.into_value();
@@ -483,18 +512,28 @@ async fn build_connection(
         sessions: HashMap::new(),
         notifications: Arc::new(NotificationHub::new()),
         live_queries: DashMap::new(),
+        txns: DashMap::new(),
+        txn_sessions: DashMap::new(),
         endpoint: canonical,
         opts,
         leases: std::sync::atomic::AtomicUsize::new(0),
     });
 
-    let drainer = Arc::clone(&connection);
+    let drainer = Arc::downgrade(&connection);
     tokio::spawn(async move {
         // The single drainer for this datastore: async-channel receivers are
         // competing consumers, so exactly one task may receive here, and it
-        // fans every notification out to each subscriber. The loop ends when
-        // the datastore is dropped and closes the sending side.
+        // fans every notification out to each subscriber. The link to the
+        // connection must stay weak: the loop only ends when the datastore is
+        // dropped (its sender drops with it), and a strong reference here
+        // would keep that datastore - and with a file-backed endpoint, its
+        // lock - alive forever. The loop therefore ends either when the
+        // channel closes or when the upgrade finds the connection already
+        // gone; a notification outliving its connection is dropped.
         while let Ok(notification) = notify_rx.recv().await {
+            let Some(drainer) = drainer.upgrade() else {
+                break;
+            };
             // 3.3 dropped the RpcProtocol::handle_kill hook; the killed live
             // query's id is only reported through its Action::Killed
             // notification, so the tracking entry is dropped here.
@@ -506,6 +545,20 @@ async fn build_connection(
     });
 
     Ok(connection)
+}
+
+/// How often a call that lost a transaction-conflict race is retried before
+/// the conflict is surfaced to the client.
+const MAX_CONFLICT_RETRIES: u32 = 5;
+
+/// Base delay between conflict retries; grows linearly with the attempt.
+const CONFLICT_RETRY_BACKOFF: Duration = Duration::from_millis(10);
+
+/// Whether [err] is a transaction conflict: the call's transaction raced a
+/// concurrent writer and was rolled back whole, so rerunning it cannot
+/// double-apply anything.
+pub(crate) fn is_transaction_conflict(err: &surrealdb_types::Error) -> bool {
+    matches!(err.query_details(), Some(QueryError::TransactionConflict))
 }
 
 /// Whether [err] is the SurrealDB 3.x "table does not exist" error, raised
@@ -533,6 +586,7 @@ async fn missing_table_fallback(
     params: &[Value],
     session_id: Uuid,
     client_session: Option<Uuid>,
+    txn: Option<Uuid>,
 ) -> Result<DbResult> {
     let what = params.first();
     match (method, what) {
@@ -542,12 +596,12 @@ async fn missing_table_fallback(
         }
         (Method::Live, Some(Value::Table(table))) => {
             create_missing_table(engine, table.as_str(), session_id).await?;
-            retry(engine, method, params, session_id, client_session).await
+            retry(engine, method, params, session_id, client_session, txn).await
         }
         // The RPC layer also accepts a plain string as a table name.
         (Method::Live, Some(Value::String(table))) => {
             create_missing_table(engine, table, session_id).await?;
-            retry(engine, method, params, session_id, client_session).await
+            retry(engine, method, params, session_id, client_session, txn).await
         }
         _ => Err(err.into()),
     }
@@ -564,8 +618,18 @@ async fn create_missing_table(
         .map_err(|e| anyhow!(e.to_string()))?;
     let session = session_lock.read().await.clone();
     let define = format!("DEFINE TABLE IF NOT EXISTS {}", escape_surreal_ident(table));
-    engine.kvs.execute(&define, &session, None).await?;
-    Ok(())
+    // The implicit-table creation can race a concurrent writer; a conflicted
+    // DEFINE was rolled back whole, so retrying it is safe.
+    let mut attempt = 0u32;
+    loop {
+        match engine.kvs.execute(&define, &session, None).await {
+            Err(err) if attempt < MAX_CONFLICT_RETRIES && is_transaction_conflict(&err) => {
+                attempt += 1;
+                tokio::time::sleep(CONFLICT_RETRY_BACKOFF * attempt).await;
+            }
+            res => return res.map(|_| ()).map_err(Into::into),
+        }
+    }
 }
 
 async fn retry(
@@ -574,10 +638,11 @@ async fn retry(
     params: &[Value],
     session_id: Uuid,
     client_session: Option<Uuid>,
+    txn: Option<Uuid>,
 ) -> Result<DbResult> {
     Ok(RpcProtocol::execute(
         engine,
-        None,
+        txn,
         session_id,
         client_session,
         method,

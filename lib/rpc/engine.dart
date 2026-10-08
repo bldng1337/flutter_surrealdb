@@ -7,7 +7,7 @@ import 'package:uuid/uuid_value.dart';
 
 mixin RPCEngine {
   Future<dynamic> execute(Method method, List<dynamic> params,
-      {UuidValue? session});
+      {UuidValue? session, UuidValue? txn});
   Future<String> engineVersion();
   Stream<Uint8List> exportStream(Config? options, {UuidValue? session});
   Future<void> import(String input, {UuidValue? session});
@@ -28,6 +28,38 @@ mixin RPCEngine {
   /// - [db]: The database to set. Pass null to unset.
   Future<void> use({String? db, String? ns, UuidValue? session}) async {
     await execute(Method.use, [ns, db], session: session);
+  }
+
+  // TRANSACTIONS
+
+  /// Begins a client-managed transaction and returns its id.
+  ///
+  /// Statements join the transaction by passing the id as [txn] on their
+  /// call; the transaction stays open (holding its write set) until
+  /// [commitTransaction] or [cancelTransaction] names it, or the session is
+  /// closed, reset or invalidated — which rolls it back.
+  Future<UuidValue> beginTransaction({UuidValue? session}) async {
+    final res = await execute(Method.begin, [], session: session);
+    if (res is! UuidValue) {
+      throw StateError(
+          "Invalid response from begin: expected a UUID got ${res.runtimeType}");
+    }
+    return res;
+  }
+
+  /// Commits the transaction with the given id, making its changes durable.
+  ///
+  /// This corresponds to the 'commit' RPC method.
+  Future<void> commitTransaction(UuidValue txn, {UuidValue? session}) async {
+    await execute(Method.commit, [txn], session: session);
+  }
+
+  /// Cancels (rolls back) the transaction with the given id, discarding its
+  /// changes.
+  ///
+  /// This corresponds to the 'cancel' RPC method.
+  Future<void> cancelTransaction(UuidValue txn, {UuidValue? session}) async {
+    await execute(Method.cancel, [txn], session: session);
   }
 
   /// Defines a session variable on the current connection.
@@ -63,10 +95,12 @@ mixin RPCEngine {
   /// - [query]: The SurrealQL query string.
   /// - [vars]: Optional variables for the query.
   /// - [session]: Optional session ID.
+  /// - [txn]: Optional transaction id; the query runs inside that transaction.
   /// Returns: List of results.
   Future<dynamic> query(String query,
-      {Map<String, dynamic>? vars, UuidValue? session}) async {
-    return await execute(Method.query, [query, vars], session: session);
+      {Map<String, dynamic>? vars, UuidValue? session, UuidValue? txn}) async {
+    return await execute(Method.query, [query, vars],
+        session: session, txn: txn);
   }
 
   /// Selects either all records in a table or a single record.
@@ -76,9 +110,11 @@ mixin RPCEngine {
   /// Parameters:
   /// - [thing]: The Resource (table or record) to select.
   /// - [session]: Optional session ID.
+  /// - [txn]: Optional transaction id; the select runs inside that transaction.
   /// Returns: The selected data.
-  Future<dynamic> select(Resource thing, {UuidValue? session}) async {
-    return await execute(Method.select, [thing], session: session);
+  Future<dynamic> select(Resource thing,
+      {UuidValue? session, UuidValue? txn}) async {
+    return await execute(Method.select, [thing], session: session, txn: txn);
   }
 
   /// Initiates a live query for a specified table.
@@ -115,10 +151,12 @@ mixin RPCEngine {
   /// - [res]: The thing (Table or Record ID) to create. Passing just a table will result in a randomly generated ID.
   /// - [data]: The content of the record.
   /// - [session]: Optional session ID.
+  /// - [txn]: Optional transaction id; the create runs inside that transaction.
   /// Returns: The created record(s).
   Future<dynamic> create(Resource res, dynamic data,
-      {UuidValue? session}) async {
-    return await execute(Method.create, [res, data], session: session);
+      {UuidValue? session, UuidValue? txn}) async {
+    return await execute(Method.create, [res, data],
+        session: session, txn: txn);
   }
 
   // Mutation
@@ -132,10 +170,12 @@ mixin RPCEngine {
   /// - [thing]: The thing (Table or Record ID) to update.
   /// - [data]: The content of the record.
   /// - [session]: Optional session ID.
+  /// - [txn]: Optional transaction id; the update runs inside that transaction.
   /// Returns: The updated data.
   Future<dynamic> update(Resource thing, dynamic data,
-      {UuidValue? session}) async {
-    return await execute(Method.update, [thing, data], session: session);
+      {UuidValue? session, UuidValue? txn}) async {
+    return await execute(Method.update, [thing, data],
+        session: session, txn: txn);
   }
 
   /// Merges specified data into either all records in a table or a single record.
@@ -145,12 +185,14 @@ mixin RPCEngine {
   ///
   /// Parameters:
   /// - [thing]: The thing (Table or Record ID) to merge into.
-  /// - [data]: The data to merge.
+  /// - [data]: The data to merge into.
   /// - [session]: Optional session ID.
+  /// - [txn]: Optional transaction id; the merge runs inside that transaction.
   /// Returns: The merged record(s).
   Future<dynamic> merge(Resource thing, dynamic data,
-      {UuidValue? session}) async {
-    return await execute(Method.merge, [thing, data], session: session);
+      {UuidValue? session, UuidValue? txn}) async {
+    return await execute(Method.merge, [thing, data],
+        session: session, txn: txn);
   }
 
   /// Patches either all records in a table or a single record with JSON Patch operations.
@@ -162,11 +204,12 @@ mixin RPCEngine {
   /// - [patches]: An array of patches following the JSON Patch specification.
   /// - [diff]: Optional, if true returns just the diff instead of the full record.
   /// - [session]: Optional session ID.
+  /// - [txn]: Optional transaction id; the patch runs inside that transaction.
   /// Returns: The patched record(s) or diff.
   Future<dynamic> patch(Resource thing, List<Map<String, dynamic>> patches,
-      {bool? diff, UuidValue? session}) async {
+      {bool? diff, UuidValue? session, UuidValue? txn}) async {
     return await execute(Method.patch, [thing, patches, if (diff != null) diff],
-        session: session);
+        session: session, txn: txn);
   }
 
   /// Replaces either all records in a table or a single record with specified data.
@@ -177,10 +220,12 @@ mixin RPCEngine {
   /// - [thing]: The thing (Table or Record ID) to upsert.
   /// - [data]: The content of the record.
   /// - [session]: Optional session ID.
+  /// - [txn]: Optional transaction id; the upsert runs inside that transaction.
   /// Returns: The upserted data.
   Future<dynamic> upsert(Resource thing, dynamic data,
-      {UuidValue? session}) async {
-    return await execute(Method.upsert, [thing, data], session: session);
+      {UuidValue? session, UuidValue? txn}) async {
+    return await execute(Method.upsert, [thing, data],
+        session: session, txn: txn);
   }
 
   /// Deletes either all records in a table or a single record.
@@ -190,9 +235,11 @@ mixin RPCEngine {
   /// Parameters:
   /// - [thing]: The thing (Table or Record ID) to delete.
   /// - [session]: Optional session ID.
+  /// - [txn]: Optional transaction id; the delete runs inside that transaction.
   /// Returns: The deleted data.
-  Future<dynamic> delete(Resource thing, {UuidValue? session}) async {
-    return await execute(Method.delete, [thing], session: session);
+  Future<dynamic> delete(Resource thing,
+      {UuidValue? session, UuidValue? txn}) async {
+    return await execute(Method.delete, [thing], session: session, txn: txn);
   }
 
   /// Inserts one or multiple records in a table.
@@ -203,10 +250,12 @@ mixin RPCEngine {
   /// - [thing]: The table to insert into.
   /// - [data]: The record(s) to insert.
   /// - [session]: Optional session ID.
+  /// - [txn]: Optional transaction id; the insert runs inside that transaction.
   /// Returns: List of inserted records.
   Future<List<dynamic>> insert(DBTable thing, dynamic data,
-      {UuidValue? session}) async {
-    return await execute(Method.insert, [thing, data], session: session);
+      {UuidValue? session, UuidValue? txn}) async {
+    return await execute(Method.insert, [thing, data],
+        session: session, txn: txn);
   }
 
   /// Inserts a relation record.
@@ -217,11 +266,12 @@ mixin RPCEngine {
   /// - [table]: The relation table to insert into.
   /// - [data]: The relation data (should include 'in' and 'out' fields).
   /// - [session]: Optional session ID.
+  /// - [txn]: Optional transaction id; the insert runs inside that transaction.
   /// Returns: The inserted relation record(s).
   Future<dynamic> insertRelation(DBTable table, dynamic data,
-      {UuidValue? session}) async {
+      {UuidValue? session, UuidValue? txn}) async {
     return await execute(Method.insertRelation, [table, data],
-        session: session);
+        session: session, txn: txn);
   }
 
   /// Creates a graph edge between two records.
@@ -234,12 +284,13 @@ mixin RPCEngine {
   /// - [outRecord]: The target record.
   /// - [data]: Optional data to store on the edge.
   /// - [session]: Optional session ID.
+  /// - [txn]: Optional transaction id; the relate runs inside that transaction.
   /// Returns: The created relation.
   Future<dynamic> relate(Resource inRecord, String relation, Resource outRecord,
-      {dynamic data, UuidValue? session}) async {
+      {dynamic data, UuidValue? session, UuidValue? txn}) async {
     return await execute(
         Method.relate, [inRecord, relation, outRecord, if (data != null) data],
-        session: session);
+        session: session, txn: txn);
   }
 
   // AUTH
@@ -354,11 +405,15 @@ mixin RPCEngine {
   /// - [version]: Optional, the version of the function or model to execute.
   /// - [args]: Optional, the arguments to pass to the function or model.
   /// - [session]: Optional session ID.
+  /// - [txn]: Optional transaction id; the function runs inside that transaction.
   /// Returns: The execution result.
   Future<dynamic> run(String function,
-      {List<dynamic>? args, String? version, UuidValue? session}) async {
+      {List<dynamic>? args,
+      String? version,
+      UuidValue? session,
+      UuidValue? txn}) async {
     return await execute(Method.run, [function, version, args],
-        session: session);
+        session: session, txn: txn);
   }
 
   /// Returns version information about the database/server.

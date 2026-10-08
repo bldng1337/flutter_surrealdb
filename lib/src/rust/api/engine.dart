@@ -41,7 +41,10 @@ abstract class SurrealFlutterEngine implements RustOpaqueInterface {
   Future<Uint8List> createSession();
 
   Future<Uint8List> execute(
-      {required Method method, required List<int> params, Uint8List? session});
+      {required Method method,
+      required List<int> params,
+      Uint8List? session,
+      Uint8List? txn});
 
   /// Streams the database export to [sink] in chunks instead of buffering
   /// the whole export in memory. Cancelling the Dart-side stream aborts the
