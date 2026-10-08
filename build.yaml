@@ -1,0 +1,12 @@
+# Restrict build_runner inputs to this package's `lib/`.
+#
+# The default target would otherwise feed every .dart file under the project
+# directory to the builders — including the `example/` sub-package's
+# `.dart_tool/` registrants and `example/*/flutter/ephemeral/` symlinks. Those
+# files crash freezed's analyzer (it cannot handle newer language syntax), and
+# the exception kills the analysis scheduler so the build never finishes.
+targets:
+  $default:
+    sources:
+      - $package$
+      - lib/**
