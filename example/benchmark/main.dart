@@ -180,6 +180,11 @@ Future<void> runTableSuite({
       await db.select(id);
     }
   }, opsPerSample: 100);
+  // Multi-record fetch by explicit ids (SurrealDB performance guidance: this
+  // does direct key lookups instead of a scan, versus 100 roundtrips above).
+  final idList = ids.map((id) => id.resource).join(', ');
+  await bench('select_ids_x100', () => db.query('SELECT * FROM $idList'),
+      opsPerSample: 100);
   await bench('merge_point_x100', () async {
     var k = 0;
     for (final id in ids) {
@@ -188,6 +193,17 @@ Future<void> runTableSuite({
   }, opsPerSample: 100);
   await bench('update_bulk',
       () => db.query('UPDATE $table SET score = score + 1'));
+  // Filtered update, two shapes (SurrealDB performance guidance: UPDATE does
+  // not use indexes; the subquery form makes the engine resolve the matching
+  // ids through them first). Toggling `active` needs no reseed: neither the
+  // filter fields nor the indexes involve it.
+  await bench('update_where',
+      () => db.query('UPDATE $table SET active = false WHERE age >= \$lo',
+          vars: {'lo': 30}));
+  await bench('update_where_subquery',
+      () => db.query(
+          'UPDATE (SELECT id FROM $table WHERE age >= \$lo) SET active = true',
+          vars: {'lo': 30}));
   await bench('filter_eq',
       () => db.query('SELECT * FROM $table WHERE category = \$category',
           vars: {'category': 3}));
